@@ -37,10 +37,15 @@ class UserProfile(models.Model):
         return f"{self.user.username} ({self.get_role_display()}) - [{self.get_status_display()}]"
 
 # --- Signal: สร้าง UserProfile อัตโนมัติเมื่อมีการสมัคร User ใหม่ ---
+# superuser (สร้างผ่าน createsuperuser) ต้องได้สถานะ approved ทันที
+# ไม่งั้นจะโดนหน้า login เด้งกลับว่า "รออนุมัติ" เหมือนสมาชิกทั่วไปที่เพิ่งสมัคร
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance)
+        if instance.is_superuser:
+            UserProfile.objects.create(user=instance, status='approved', role='admin')
+        else:
+            UserProfile.objects.create(user=instance)
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):

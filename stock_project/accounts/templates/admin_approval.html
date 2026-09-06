@@ -6,128 +6,324 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบอนุมัติสมาชิก - คลังอะไหล่</title>
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-</head>
-<body class="bg-light">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper: #eef1ee;
+            --panel: #ffffff;
+            --ink: #1c211e;
+            --line: #d7ddd8;
+            --copper: #b2601f;
+            --copper-deep: #8c4a17;
+            --muted: #5c645f;
+            --danger: #9c4130;
+            --danger-bg: #f6e9e6;
+            --ok: #3a6b3f;
+        }
+        * { box-sizing: border-box; }
+        html { font-size: 108%; }
+        body {
+            background: var(--paper);
+            font-family: 'IBM Plex Sans Thai', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--ink);
+            line-height: 1.6;
+        }
 
-    <div class="container mt-5 mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>จัดการสถานะผู้ใช้งาน (Admin Approval Dashboard)</h2>
-            <a href="/" class="btn btn-secondary">กลับหน้าหลักคลังอะไหล่</a>
+        .page-wrap { max-width: 1140px; margin: 0 auto; padding: 2.5rem 1rem; }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.75rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .page-header h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.35rem; }
+        .page-header p { color: var(--muted); margin: 0; font-size: 0.95rem; }
+        .btn-back {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--ink);
+            padding: 0.55rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.92rem;
+            text-decoration: none;
+            transition: transform 0.12s ease, border-color 0.15s ease;
+        }
+        .btn-back:hover { border-color: var(--muted); color: var(--ink); transform: translateY(-1px); }
+
+        .panel-card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+
+        .alert-flat {
+            border-radius: 3px;
+            padding: 0.8rem 1rem;
+            font-size: 0.92rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid;
+        }
+        .alert-flat.success { background: #eaf3ea; border-color: var(--ok); color: var(--ink); }
+        .alert-flat.error { background: var(--danger-bg); border-color: var(--danger); color: var(--ink); }
+        .alert-flat.warning { background: #faf2e2; border-color: var(--copper); color: var(--ink); }
+        .alert-flat.info { background: var(--paper); border-color: var(--muted); color: var(--ink); }
+
+        .approval-table { width: 100%; border-collapse: collapse; }
+        .approval-table thead th {
+            background: var(--ink);
+            color: #f0ede6;
+            font-weight: 500;
+            font-size: 0.85rem;
+            text-align: left;
+            padding: 0.75rem 1rem;
+        }
+        .approval-table thead th.text-center { text-align: center; }
+        .approval-table tbody td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--line);
+            vertical-align: middle;
+            font-size: 0.92rem;
+        }
+        .approval-table tbody tr:hover { background: var(--paper); }
+        .approval-table tbody tr:last-child td { border-bottom: none; }
+
+        .role-tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .role-super { background: var(--danger-bg); color: var(--danger); }
+        .role-admin { background: #faf2e2; color: var(--copper-deep); }
+        .role-member { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
+
+        .status-tag { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 500; }
+        .status-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+        .status-pending { color: var(--copper-deep); }
+        .status-pending::before { background: var(--copper); }
+        .status-approved { color: var(--ok); }
+        .status-approved::before { background: var(--ok); }
+        .status-rejected, .status-suspended { color: var(--danger); }
+        .status-rejected::before, .status-suspended::before { background: var(--danger); }
+
+        .approved-by { color: var(--muted); font-size: 0.85rem; }
+        .self-tag {
+            display: inline-block;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        .row-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.4rem; }
+        .row-actions form { margin: 0; }
+        .btn-row-action {
+            border-radius: 5px;
+            font-size: 0.8rem;
+            padding: 0.32rem 0.75rem;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            cursor: pointer;
+            transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn-row-action:hover { transform: translateY(-1px); }
+        .btn-row-action:active { transform: translateY(0); box-shadow: none; }
+        .btn-approve { color: var(--ok); }
+        .btn-approve:hover { background: #eaf3ea; border-color: var(--ok); box-shadow: 0 2px 6px rgba(58, 107, 63, 0.18); }
+        .btn-reject, .btn-delete { color: var(--danger); }
+        .btn-reject:hover, .btn-delete:hover { background: var(--danger-bg); border-color: var(--danger); box-shadow: 0 2px 6px rgba(156, 65, 48, 0.18); }
+        .btn-suspend { color: var(--copper-deep); }
+        .btn-suspend:hover { background: #faf2e2; border-color: var(--copper); box-shadow: 0 2px 6px rgba(178, 96, 31, 0.18); }
+        .btn-promote, .btn-demote { color: var(--ink); }
+        .btn-promote:hover, .btn-demote:hover { background: var(--paper); border-color: var(--muted); }
+
+        /* Modal ปฏิเสธ: ปรับให้เข้าธีมร้านแทนสไตล์ Bootstrap default */
+        .modal-content {
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            border-top: 3px solid var(--danger);
+        }
+        .modal-header { border-bottom: 1px solid var(--line); }
+        .modal-title { font-size: 1.1rem; font-weight: 600; color: var(--ink); }
+        .modal-footer { border-top: 1px solid var(--line); }
+        #rejectReasonInput {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            padding: 0.55rem 0.75rem;
+            font-size: 0.92rem;
+            font-family: inherit;
+        }
+        #rejectReasonInput:focus { outline: none; border-color: var(--copper); }
+    </style>
+</head>
+<body>
+
+    <div class="page-wrap">
+        <div class="page-header">
+            <div>
+                <h1>จัดการสถานะผู้ใช้งาน</h1>
+                <p>อนุมัติ ปฏิเสธ หรือปรับสิทธิ์ผู้ใช้งานในระบบคลังอะไหล่</p>
+            </div>
+            <a href="/" class="btn-back">กลับหน้าหลักคลังอะไหล่</a>
         </div>
 
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags %}{{ message.tags }}{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+                <div class="alert-flat {% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %}">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
         {% endif %}
 
-        <div class="card shadow">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped align-middle">
-                        <thead>
-                            <tr>
-                                <th>ผู้ใช้งาน (Username)</th>
-                                <th>ชื่อ-นามสกุล</th>
-                                <th>อีเมล / เบอร์โทร</th>
-                                <th>ระดับสิทธิ์</th>
-                                <th>สถานะปัจจุบัน</th>
-                                <th>ดำเนินการโดย</th>
-                                <th class="text-center">การจัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in profiles %}
-                            <tr>
-                                <td><strong>{{ p.user.username }}</strong></td>
-                                <td>{{ p.user.first_name }} {{ p.user.last_name }}</td>
-                                <td>
-                                    {{ p.user.email|default:"-" }}<br>
-                                    <small class="text-muted">{{ p.phone_number|default:"-" }}</small>
-                                </td>
-                                <td>
-                                    {% if p.user.is_superuser %}
-                                        <span class="badge bg-danger">Super Admin</span>
-                                    {% elif p.user.is_staff %}
-                                        <span class="badge bg-warning text-dark">Admin</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Member</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if p.status == 'pending' %}
-                                        <span class="badge bg-warning text-dark">รออนุมัติ</span>
-                                    {% elif p.status == 'approved' %}
-                                        <span class="badge bg-success">อนุมัติแล้ว</span>
-                                    {% elif p.status == 'rejected' %}
-                                        <span class="badge bg-danger" title="{{ p.rejection_reason }}">ไม่อนุมัติ</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">ถูกระงับ</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if p.approved_by %}
-                                        <small class="text-muted">👤 {{ p.approved_by.username }}</small>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    {% if p.user == request.user %}
-                                        <!-- ป้องกันจัดการบัญชีตัวเอง -->
-                                        <span class="badge bg-light text-muted border">บัญชีของคุณ</span>
-                                    {% else %}
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            
-                                            <!-- 1. บัญชีรอการอนุมัติ: แสดงเฉพาะปุ่มอนุมัติและปฏิเสธ -->
-                                            {% if p.status == 'pending' %}
-                                                <a href="{% url 'accounts:update_status' p.id 'approve' %}" class="btn btn-success">อนุมัติ</a>
-                                                <a href="{% url 'accounts:update_status' p.id 'reject' %}" class="btn btn-danger" onclick="return confirm('ยืนยันการปฏิเสธบัญชี {{ p.user.username }}?')">ปฏิเสธ</a>
-                                            
-                                            <!-- 2. บัญชีที่อนุมัติแล้ว: ไม่แสดงปุ่มอนุมัติซ้ำ เหลือแค่เลื่อน/ลดสิทธิ์, ระงับ -->
-                                            {% elif p.status == 'approved' %}
-                                                
-                                                <!-- เลื่อนขั้นเป็น Admin / ลดขั้นเป็น Member -->
-                                                {% if not p.user.is_superuser %}
-                                                    {% if p.user.is_staff %}
-                                                        <a href="{% url 'accounts:update_status' p.id 'remove_admin' %}" class="btn btn-outline-warning" onclick="return confirm('ต้องการลดสิทธิ์คุณ {{ p.user.username }} เป็น Member ใช่หรือไม่?')">ลดเป็น Member</a>
-                                                    {% else %}
-                                                        <a href="{% url 'accounts:update_status' p.id 'make_admin' %}" class="btn btn-outline-primary" onclick="return confirm('ต้องการแต่งตั้งคุณ {{ p.user.username }} เป็น Admin ใช่หรือไม่?')">ตั้งเป็น Admin</a>
-                                                    {% endif %}
-                                                {% endif %}
+        <div class="panel-card">
+            <div class="table-responsive">
+                <table class="approval-table">
+                    <thead>
+                        <tr>
+                            <th>ผู้ใช้งาน</th>
+                            <th>ชื่อ-นามสกุล</th>
+                            <th>อีเมล / เบอร์โทร</th>
+                            <th>ระดับสิทธิ์</th>
+                            <th>สถานะปัจจุบัน</th>
+                            <th>ดำเนินการโดย</th>
+                            <th class="text-center">การจัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in profiles %}
+                        <tr>
+                            <td><strong>{{ p.user.username }}</strong></td>
+                            <td>{{ p.user.first_name }} {{ p.user.last_name }}</td>
+                            <td>
+                                {{ p.user.email|default:"-" }}<br>
+                                <small class="text-muted">{{ p.phone_number|default:"-" }}</small>
+                            </td>
+                            <td>
+                                {% if p.user.is_superuser %}
+                                    <span class="role-tag role-super">Super Admin</span>
+                                {% elif p.user.is_staff %}
+                                    <span class="role-tag role-admin">Admin</span>
+                                {% else %}
+                                    <span class="role-tag role-member">Member</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.status == 'pending' %}
+                                    <span class="status-tag status-pending">รออนุมัติ</span>
+                                {% elif p.status == 'approved' %}
+                                    <span class="status-tag status-approved">อนุมัติแล้ว</span>
+                                {% elif p.status == 'rejected' %}
+                                    <span class="status-tag status-rejected" title="{{ p.rejection_reason }}">ไม่อนุมัติ</span>
+                                {% else %}
+                                    <span class="status-tag status-suspended">ถูกระงับ</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.approved_by %}
+                                    <span class="approved-by">{{ p.approved_by.username }}</span>
+                                {% else %}
+                                    <span class="approved-by">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if p.user == request.user %}
+                                    <span class="self-tag">บัญชีของคุณ</span>
+                                {% else %}
+                                    <div class="row-actions">
 
-                                                <!-- ปุ่มระงับบัญชี -->
-                                                <a href="{% url 'accounts:update_status' p.id 'suspend' %}" class="btn btn-warning" onclick="return confirm('ยืนยันการระงับบัญชีคุณ {{ p.user.username }}?')">ระงับ</a>
+                                        {% if p.status == 'pending' %}
+                                            <form method="POST" action="{% url 'accounts:update_status' p.id 'approve' %}" onsubmit="return confirm('ยืนยันการอนุมัติบัญชี {{ p.user.username }}?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-row-action btn-approve">อนุมัติ</button>
+                                            </form>
+                                            <button type="button" class="btn-row-action btn-reject"
+                                                    data-bs-toggle="modal" data-bs-target="#rejectModal"
+                                                    data-action-url="{% url 'accounts:update_status' p.id 'reject' %}"
+                                                    data-username="{{ p.user.username }}">ปฏิเสธ</button>
 
-                                            <!-- 3. บัญชีที่ถูกระงับ หรือ ถูกปฏิเสธ: แสดงปุ่มเปิดใช้งานอีกครั้ง -->
-                                            {% elif p.status == 'suspended' or p.status == 'rejected' %}
-                                                <a href="{% url 'accounts:update_status' p.id 'approve' %}" class="btn btn-outline-success" onclick="return confirm('ต้องการเปิดให้ {{ p.user.username }} ใช้งานอีกครั้ง?')">เปิดใช้งานอีกครั้ง</a>
-                                            {% endif %}
-
-                                            <!-- ปุ่มลบบัญชี (ไม่แสดงให้กดลบ Super Admin) -->
+                                        {% elif p.status == 'approved' %}
                                             {% if not p.user.is_superuser %}
-                                                <a href="{% url 'accounts:update_status' p.id 'delete_user' %}" class="btn btn-outline-danger" onclick="return confirm('ยืนยันลบบัญชี {{ p.user.username }} ออกจากระบบถาวรหรือไม่?')">ลบบัญชี</a>
+                                                {% if p.user.is_staff %}
+                                                    <form method="POST" action="{% url 'accounts:update_status' p.id 'remove_admin' %}" onsubmit="return confirm('ต้องการลดสิทธิ์ {{ p.user.username }} เป็น Member ใช่หรือไม่?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn-row-action btn-demote">ลดเป็น Member</button>
+                                                    </form>
+                                                {% else %}
+                                                    <form method="POST" action="{% url 'accounts:update_status' p.id 'make_admin' %}" onsubmit="return confirm('ต้องการแต่งตั้ง {{ p.user.username }} เป็น Admin ใช่หรือไม่?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn-row-action btn-promote">ตั้งเป็น Admin</button>
+                                                    </form>
+                                                {% endif %}
                                             {% endif %}
+                                            <form method="POST" action="{% url 'accounts:update_status' p.id 'suspend' %}" onsubmit="return confirm('ยืนยันการระงับบัญชี {{ p.user.username }}?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-row-action btn-suspend">ระงับ</button>
+                                            </form>
 
-                                        </div>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">ยังไม่มีสมาชิกในระบบ</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                        {% elif p.status == 'suspended' or p.status == 'rejected' %}
+                                            <form method="POST" action="{% url 'accounts:update_status' p.id 'approve' %}" onsubmit="return confirm('ต้องการเปิดให้ {{ p.user.username }} ใช้งานอีกครั้ง?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-row-action btn-approve">เปิดใช้งานอีกครั้ง</button>
+                                            </form>
+                                        {% endif %}
+
+                                        {% if not p.user.is_superuser %}
+                                            <form method="POST" action="{% url 'accounts:update_status' p.id 'delete_user' %}" onsubmit="return confirm('ยืนยันลบบัญชี {{ p.user.username }} ออกจากระบบถาวรหรือไม่?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-row-action btn-delete">ลบบัญชี</button>
+                                            </form>
+                                        {% endif %}
+
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">ยังไม่มีสมาชิกในระบบ</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ปฏิเสธ: ใช้ร่วมกันทุกแถว เปลี่ยน action ปลายทางด้วย JS ตอนเปิด -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" id="rejectForm">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title">ปฏิเสธบัญชี <span id="rejectUsername"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label fw-bold mb-2">เหตุผลในการปฏิเสธ</label>
+                        <textarea name="rejection_reason" id="rejectReasonInput" rows="3" placeholder="ระบุเหตุผลให้ผู้สมัครทราบ" required></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-back" data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn-row-action btn-reject" style="padding: 0.55rem 1.3rem; font-size: 0.92rem;">ยืนยันการปฏิเสธ</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        var rejectModal = document.getElementById('rejectModal');
+        rejectModal.addEventListener('show.bs.modal', function (event) {
+            var trigger = event.relatedTarget;
+            document.getElementById('rejectForm').setAttribute('action', trigger.getAttribute('data-action-url'));
+            document.getElementById('rejectUsername').textContent = trigger.getAttribute('data-username');
+        });
+    </script>
 </body>
 </html>

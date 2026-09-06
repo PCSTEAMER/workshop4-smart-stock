@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.http import require_POST
 from django.core.mail import send_mail
 from django.conf import settings
 from .forms import SignUpForm
@@ -29,7 +30,7 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             
             if user is not None:
-                if hasattr(user, 'profile'):
+                if hasattr(user, 'profile') and not user.is_staff and not user.is_superuser:
                     profile = user.profile
                     if profile.status == 'pending':
                         messages.warning(request, 'บัญชีของคุณยังอยู่ในสถานะรอการอนุมัติจากผู้ดูแลระบบ กรุณารอการติดต่อกลับ')
@@ -61,7 +62,11 @@ def admin_approval_list(request):
     profiles = UserProfile.objects.select_related('user', 'approved_by').all().order_by('id')
     return render(request, 'admin_approval.html', {'profiles': profiles})
 
+# ทุก action ในนี้แก้ไขข้อมูลจริง (อนุมัติ/ปฏิเสธ/ระงับ/ให้สิทธิ์/ลบบัญชี)
+# จึงบังคับให้เป็น POST เท่านั้น (require_POST) เพื่อปิดช่องโหว่ CSRF ที่เคยเกิดจากการ
+# ยิง action ผ่าน GET link ตรง ๆ — ถ้ามีการเรียกด้วย GET จะได้ 405 Method Not Allowed ทันที
 @staff_member_required
+@require_POST
 def update_status(request, profile_id, action):
     profile = get_object_or_404(UserProfile, id=profile_id)
     target_user = profile.user
@@ -82,7 +87,7 @@ def update_status(request, profile_id, action):
                 recipient_list=[target_user.email],
                 fail_silently=True
             )
-        messages.success(request, f'อนุมัติบัญชีของคุณ {target_user.username} เรียบร้อยแล้ว')
+        messages.success(request, f'อนุมัติบัญชีของ {target_user.username} เรียบร้อยแล้ว')
 
     # 2. ปฏิเสธการสมัคร + ส่งเมลแจ้งเหตุผล
     elif action == 'reject':
@@ -100,14 +105,14 @@ def update_status(request, profile_id, action):
                 recipient_list=[target_user.email],
                 fail_silently=True
             )
-        messages.error(request, f'ปฏิเสธบัญชีของคุณ {target_user.username} แล้ว')
+        messages.error(request, f'ปฏิเสธบัญชีของ {target_user.username} แล้ว')
 
     # 3. ระงับการใช้งาน
     elif action == 'suspend':
         profile.status = 'suspended'
         profile.approved_by = request.user
         profile.save()
-        messages.warning(request, f'ระงับการใช้งานบัญชีของคุณ {target_user.username} แล้ว')
+        messages.warning(request, f'ระงับการใช้งานบัญชีของ {target_user.username} แล้ว')
 
     # 4. เลื่อนขั้นเป็น Admin + ส่งเมลแจ้งเตือน
     elif action == 'make_admin':
@@ -135,7 +140,7 @@ def update_status(request, profile_id, action):
             target_user.save()
             profile.approved_by = request.user
             profile.save()
-            messages.info(request, f'ปรับลดสิทธิ์คุณ {target_user.username} เป็น Member เรียบร้อยแล้ว')
+            messages.info(request, f'ปรับลดสิทธิ์ {target_user.username} เป็น Member เรียบร้อยแล้ว')
 
     # 6. ลบบัญชีผู้ใช้ออกจากระบบ (ข้อมูลประวัติการเบิกจะไม่สูญหาย)
     elif action == 'delete_user':

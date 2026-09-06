@@ -138,6 +138,33 @@
             color: #8a9089;
         }
 
+        /* แบนเนอร์ข้อความแจ้งเตือน (Django messages) */
+        .alert-flat {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            border-radius: 3px;
+            padding: 0.85rem 1rem;
+            font-size: 0.92rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid;
+        }
+        .alert-flat.success { background: #eaf3ea; border-color: #3a6b3f; color: var(--ink); }
+        .alert-flat.error { background: #f6e9e6; border-color: #9c4130; color: var(--ink); }
+        .alert-flat.warning { background: #faf2e2; border-color: var(--copper); color: var(--ink); }
+        .alert-flat.info { background: var(--paper); border-color: var(--muted); color: var(--ink); }
+        .alert-flat .alert-close {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 1.1rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+        .alert-flat .alert-close:hover { color: var(--ink); }
+
         a:focus-visible, button:focus-visible, .btn:focus-visible {
             outline: 2px solid var(--copper);
             outline-offset: 2px;
@@ -182,6 +209,15 @@
     </nav>
 
     <main class="container my-5">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-flat {% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %}">
+                    <span>{{ message }}</span>
+                    <button type="button" class="alert-close" onclick="this.parentElement.remove()" aria-label="ปิด">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         {% block content %}{% endblock %}
     </main>
 
