@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    :root {
+        --paper: #eef1ee;
+        --panel: #ffffff;
+        --ink: #1c211e;
+        --line: #d7ddd8;
+        --copper: #b2601f;
+        --copper-deep: #8c4a17;
+        --muted: #5c645f;
+        --danger: #9c4130;
+    }
+
+    .page-header {
+        max-width: 640px;
+        margin: 0 auto 1.75rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--line);
+    }
+    .page-header h1 { font-size: 1.5rem; font-weight: 600; color: var(--ink); margin: 0 0 0.35rem; }
+    .page-header p { color: var(--muted); margin: 0; font-size: 0.95rem; }
+
+    .form-wrap { max-width: 640px; margin: 0 auto; }
+    .panel-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 2rem;
+    }
+
+    .note-box {
+        background: var(--paper);
+        border-left: 3px solid var(--copper);
+        border-radius: 3px;
+        padding: 0.85rem 1rem;
+        font-size: 0.9rem;
+        color: var(--ink);
+        margin-bottom: 1.75rem;
+    }
+    .note-box strong { color: var(--copper-deep); }
+
+    /* การ์ดสรุปข้อมูลอะไหล่ที่ส่งมาทำรายการ */
+    .part-summary-card {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    .part-summary-thumb {
+        width: 72px;
+        height: 72px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        background: #fff;
+    }
+    .part-summary-thumb-empty {
+        width: 72px;
+        height: 72px;
+        border-radius: 4px;
+        border: 1px dashed var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        color: var(--muted);
+        background: #fff;
+        text-align: center;
+    }
+    .part-summary-details { flex-grow: 1; }
+    .part-summary-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 0.3rem;
+    }
+    .part-summary-meta {
+        font-size: 0.82rem;
+        color: var(--muted);
+        line-height: 1.4;
+    }
+    .part-summary-stock {
+        display: inline-block;
+        margin-top: 0.35rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--copper-deep);
+        background: #fdf3e7;
+        padding: 0.15rem 0.55rem;
+        border-radius: 3px;
+        border: 1px solid #fbd38d;
+    }
+
+    .field-block label {
+        display: block;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: var(--ink);
+        margin-bottom: 0.4rem;
+    }
+    .field-block input:not([type="checkbox"]):not([type="radio"]),
+    .field-block select,
+    .field-block textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.95rem;
+        font-family: inherit;
+        background: var(--panel);
+        color: var(--ink);
+    }
+    .field-block input:focus, .field-block select:focus, .field-block textarea:focus {
+        outline: none;
+        border-color: var(--copper);
+    }
+    .field-error {
+        color: var(--danger);
+        font-size: 0.85rem;
+        margin-top: 0.4rem;
+        border-left: 2px solid var(--danger);
+        padding-left: 0.5rem;
+    }
+
+    .form-footer {
+        border-top: 1px solid var(--line);
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+    .btn-cancel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        padding: 0.6rem 1.4rem;
+        border-radius: 6px;
+        font-size: 0.92rem;
+        text-decoration: none;
+        transition: transform 0.12s ease, border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .btn-cancel:hover { border-color: var(--muted); background: var(--paper); color: var(--ink); transform: translateY(-1px); }
+    .btn-cancel:active { transform: translateY(0); }
+    .btn-save {
+        background: linear-gradient(180deg, #c1712e 0%, var(--copper) 55%, var(--copper-deep) 100%);
+        border: 1px solid var(--copper-deep);
+        color: #fff;
+        padding: 0.6rem 1.7rem;
+        border-radius: 6px;
+        font-size: 0.92rem;
+        font-weight: 500;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.15);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .btn-save:hover {
+        transform: translateY(-1px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    .btn-save:active { transform: translateY(0); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3); }
+
+    /* ปรับ Select2 ให้เข้าธีมของร้าน แทน theme ฟ้ามาตรฐาน */
+    .select2-container--default .select2-selection--single {
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        height: auto;
+        padding: 0.47rem 0.75rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: var(--ink);
+        padding: 0;
+        line-height: 1.4;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 100%;
+        top: 0;
+        right: 8px;
+    }
+    .select2-container--default.select2-container--open .select2-selection--single,
+    .select2-container--default .select2-selection--single:focus {
+        border-color: var(--copper);
+    }
+    .select2-dropdown {
+        border-color: var(--line);
+        border-radius: 3px;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 0.4rem 0.6rem;
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background: var(--copper);
+        color: #fff;
+    }
+</style>
+
+<div class="page-header">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1>บันทึกการเบิก-จ่ายอะไหล่</h1>
+            <p>เลือกอะไหล่และระบุจำนวนที่นำเข้าหรือเบิกออกจากคลัง</p>
+        </div>
+        {% if request.user.is_authenticated %}
+            <span style="font-size: 0.82rem; background: var(--panel); border: 1px solid var(--line); padding: 0.3rem 0.65rem; border-radius: 4px; color: var(--muted);">
+                👤 ผู้ทำรายการ: <strong style="color: var(--ink);">{{ request.user.username }}</strong>
+            </span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="form-wrap">
+    <div class="panel-card">
+
+        <!-- กล่องข้อมูลรายละเอียดอะไหล่ (แสดงเมื่อส่ง part_id มา) -->
+        {% if selected_part %}
+            <div class="part-summary-card">
+                {% if selected_part.image %}
+                    <img src="{{ selected_part.image.url }}" alt="{{ selected_part.name }}" class="part-summary-thumb">
+                {% else %}
+                    <div class="part-summary-thumb-empty">ไม่มีรูป</div>
+                {% endif %}
+                <div class="part-summary-details">
+                    <div class="part-summary-name">{{ selected_part.name }}</div>
+                    <div class="part-summary-meta">
+                        <strong>SKU:</strong> {{ selected_part.part_code }} &nbsp;|&nbsp;
+                        <strong>หมวดหมู่:</strong> {{ selected_part.get_category_display }}<br>
+                        <strong>ตำแหน่งจัดเก็บ:</strong> 
+                        {% if selected_part.location %}
+                            📍 {{ selected_part.location }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                    <div class="part-summary-stock">
+                        คงเหลือในคลัง: {{ selected_part.quantity }} ชิ้น
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="note-box">
+            เมื่อบันทึกรายการแล้ว ระบบจะ<strong>บวกเพิ่ม</strong>หรือ<strong>หักลบ</strong>จำนวนคงเหลือของอะไหล่ชิ้นนั้นให้อัตโนมัติทันที
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row g-4">
+                {% for field in form %}
+                    <div class="col-12 {% if field.name == 'action_type' or field.name == 'quantity' %}col-md-6{% endif %}">
+                        <div class="field-block">
+                            <label>{{ field.label }}</label>
+
+                            {{ field }}
+
+                            {% if field.errors %}
+                                <div class="field-error">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="form-footer">
+                <a href="{% url 'part_list' %}" class="btn-cancel">ยกเลิก</a>
+                <button type="submit" class="btn-save">บันทึกรายการ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('#id_part').select2({
+            theme: 'default',
+            placeholder: 'พิมพ์ชื่อหรือรหัสอะไหล่เพื่อค้นหา',
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "ไม่พบข้อมูลอะไหล่ที่ค้นหา";
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    :root {
+        --paper: #eef1ee;
+        --panel: #ffffff;
+        --ink: #1c211e;
+        --line: #d7ddd8;
+        --copper: #b2601f;
+        --copper-deep: #8c4a17;
+        --muted: #5c645f;
+        --danger: #9c4130;
+        --danger-bg: #f6e9e6;
+        --low-stock: #a1481c;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.75rem;
+        border-bottom: 1px solid var(--line);
+    }
+    .page-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 0.35rem;
+    }
+    .page-header p {
+        color: var(--muted);
+        margin: 0;
+        font-size: 0.95rem;
+        max-width: 46ch;
+    }
+    .search-box {
+        min-width: 280px;
+    }
+    .search-box input {
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 0.55rem 0.85rem;
+        font-size: 0.95rem;
+        width: 100%;
+        background: var(--panel);
+        color: var(--ink);
+    }
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--copper);
+        box-shadow: none;
+    }
+
+    .panel-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+    }
+    .panel-card-body { padding: 1.5rem; }
+
+    .parts-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .parts-table thead th {
+        background: var(--ink);
+        color: #f0ede6;
+        font-weight: 500;
+        font-size: 0.85rem;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        border: none;
+    }
+    .parts-table thead th:last-child { text-align: center; }
+    .parts-table tbody td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: middle;
+        font-size: 0.93rem;
+    }
+    .parts-table tbody tr:hover { background: var(--paper); }
+    .parts-table tbody tr:last-child td { border-bottom: none; }
+
+    .part-thumb {
+        height: 52px;
+        width: 52px;
+        object-fit: cover;
+        border-radius: 3px;
+        border: 1px solid var(--line);
+    }
+    .part-thumb-empty {
+        height: 52px;
+        width: 52px;
+        border-radius: 3px;
+        border: 1px dashed var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        color: var(--muted);
+        text-align: center;
+    }
+    .part-code {
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 500;
+        color: var(--copper-deep);
+        font-size: 0.85rem;
+    }
+    .category-tag {
+        display: inline-block;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        padding: 0.2rem 0.6rem;
+        border-radius: 3px;
+        font-size: 0.82rem;
+    }
+    .location-text {
+        font-size: 0.88rem;
+        color: var(--muted);
+        background: var(--paper);
+        padding: 0.15rem 0.5rem;
+        border-radius: 3px;
+        border: 1px solid var(--line);
+        display: inline-block;
+    }
+    .qty-ok { color: #3a6b3f; font-weight: 500; }
+    .qty-low {
+        color: var(--low-stock);
+        font-weight: 500;
+        border-left: 3px solid var(--low-stock);
+        padding-left: 0.5rem;
+    }
+
+    .row-actions { display: flex; justify-content: center; align-items: center; gap: 0.4rem; }
+    .btn-row-action {
+        border-radius: 5px;
+        font-size: 0.82rem;
+        padding: 0.32rem 0.75rem;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        text-decoration: none;
+        transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-action-tx {
+        color: #b2601f;
+        border-color: #fbd38d;
+        background: #fffaf0;
+        font-weight: 500;
+    }
+    .btn-action-tx:hover { background: #feebc8; }
+    .btn-edit { color: var(--copper-deep); }
+    .btn-edit:hover { background: #f7ede1; border-color: var(--copper); }
+    .btn-delete { color: var(--danger); }
+    .btn-delete:hover { background: var(--danger-bg); border-color: var(--danger); }
+
+    .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--muted); }
+    .empty-state h4 { color: var(--ink); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .empty-state a {
+        display: inline-block;
+        margin-top: 1rem;
+        background: linear-gradient(180deg, #c1712e 0%, var(--copper) 55%, var(--copper-deep) 100%);
+        color: #fff;
+        padding: 0.6rem 1.4rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 500;
+    }
+
+    .pagination-flat {
+        display: flex;
+        justify-content: center;
+        gap: 0.35rem;
+        list-style: none;
+        padding: 0;
+        margin: 1.75rem 0 0;
+    }
+    .pagination-flat a, .pagination-flat span {
+        display: inline-block;
+        min-width: 36px;
+        text-align: center;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 0.88rem;
+        background: var(--panel);
+    }
+    .pagination-flat a:hover { border-color: var(--copper); color: var(--copper-deep); }
+    .pagination-flat .active span {
+        background: linear-gradient(180deg, #2a3129 0%, var(--ink) 100%);
+        border-color: var(--ink);
+        color: #fff;
+    }
+    .pagination-flat .disabled span { color: var(--muted); background: var(--paper); }
+
+    /* ป้าย Badge สำหรับ Role */
+    .role-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2rem 0.55rem;
+        border-radius: 4px;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .role-admin {
+        background: #fef08a;
+        color: #854d0e;
+        border: 1px solid #fde047;
+    }
+    .role-member {
+        background: #e0e7ff;
+        color: #3730a3;
+        border: 1px solid #c7d2fe;
+    }
+    .role-guest {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
+    }
+</style>
+
+<!-- เมนูแถบบน: แสดง Role ผู้ใช้ หรือ Guest เมื่อยังไม่ล็อกอิน -->
+<div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded border">
+    <div>
+        {% if request.user.is_authenticated %}
+            <span class="me-3">
+                👤 เข้าสู่ระบบโดย: <strong>{{ request.user.username }}</strong>
+                {% if request.user.is_staff or request.user.is_superuser %}
+                    <span class="role-badge role-admin">Admin</span>
+                {% else %}
+                    <span class="role-badge role-member">Member</span>
+                {% endif %}
+            </span>
+        {% else %}
+            <span class="me-3">
+                👤 สถานะ: <strong>ผู้เยี่ยมชม</strong>
+                <span class="role-badge role-guest">Guest</span>
+            </span>
+        {% endif %}
+    </div>
+    <div>
+        {% if request.user.is_staff or request.user.is_superuser %}
+            <a href="{% url 'accounts:admin_approval' %}" class="btn btn-dark btn-sm me-2">⚙️ จัดการอนุมัติสมาชิก</a>
+        {% endif %}
+        
+        {% if request.user.is_authenticated %}
+            <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm">ออกจากระบบ</a>
+        {% else %}
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm me-2">เข้าสู่ระบบ</a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">สมัครสมาชิก</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="page-header">
+    <div>
+        <h1>รายการอะไหล่ทั้งหมด</h1>
+        <p>ตรวจสอบจำนวนคงเหลือและค้นหาอะไหล่ก่อนเบิกไปใช้ซ่อมเครื่องใช้ไฟฟ้าของลูกค้า</p>
+    </div>
+    <div class="search-box">
+        <input type="text" id="searchInput" value="{{ query }}" placeholder="ค้นหาด้วยรหัสหรือชื่ออะไหล่">
+    </div>
+</div>
+
+<div class="panel-card">
+    <div class="panel-card-body">
+
+        <div id="table-container">
+
+            <div class="table-responsive">
+                <table class="parts-table">
+                    <thead>
+                        <tr>
+                            <th>รูปภาพ</th>
+                            <th>รหัสสินค้า (SKU)</th>
+                            <th>ชื่ออะไหล่</th>
+                            <th>หมวดหมู่</th>
+                            <th>ตำแหน่งจัดเก็บ</th>
+                            <th>จำนวนคงเหลือ</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for part in parts %}
+                        <tr>
+                            <td>
+                                {% if part.image %}
+                                    <img src="{{ part.image.url }}" alt="{{ part.name }}" class="part-thumb">
+                                {% else %}
+                                    <div class="part-thumb-empty">ไม่มีรูป</div>
+                                {% endif %}
+                            </td>
+                            <td><span class="part-code">{{ part.part_code }}</span></td>
+                            <td>{{ part.name }}</td>
+                            <td><span class="category-tag">{{ part.get_category_display }}</span></td>
+                            <td>
+                                {% if part.location %}
+                                    <span class="location-text">📍 {{ part.location }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if part.quantity < 20 %}
+                                    <span class="qty-low">{{ part.quantity }} ชิ้น — ใกล้หมด</span>
+                                {% else %}
+                                    <span class="qty-ok">{{ part.quantity }} ชิ้น</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="row-actions">
+                                    {% if request.user.is_authenticated %}
+                                        <!-- ปุ่มเบิก/รับ สำหรับคนที่เข้าสู่ระบบแล้ว -->
+                                        <a href="{% url 'transaction_create' %}?part_id={{ part.pk }}" class="btn-row-action btn-action-tx">เบิก/รับ</a>
+                                        
+                                        {% if request.user.is_staff or request.user.is_superuser %}
+                                            <a href="{% url 'part_update' part.pk %}" class="btn-row-action btn-edit">แก้ไข</a>
+                                            <a href="{% url 'part_delete' part.pk %}" class="btn-row-action btn-delete">ลบ</a>
+                                        {% endif %}
+                                    {% else %}
+                                        <!-- สำหรับ Guest ที่ยังไม่ล็อกอิน -->
+                                        <span class="text-muted" style="font-size: 0.8rem;">- เฉพาะแอดมิน -</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <h4>ยังไม่มีข้อมูลอะไหล่ในระบบ</h4>
+                                    <p>เพิ่มอะไหล่ชิ้นแรกเพื่อเริ่มบันทึกสต๊อกของร้าน</p>
+                                    {% if request.user.is_staff or request.user.is_superuser %}
+                                        <a href="{% url 'part_create' %}">เพิ่มอะไหล่ชิ้นแรก</a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ระบบแบ่งหน้า -->
+            {% if parts.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination-flat">
+                    {% if parts.has_previous %}
+                        <li><a href="?page={{ parts.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">ก่อนหน้า</a></li>
+                    {% else %}
+                        <li class="disabled"><span>ก่อนหน้า</span></li>
+                    {% endif %}
+
+                    {% for i in parts.paginator.page_range %}
+                        {% if parts.number == i %}
+                            <li class="active"><span>{{ i }}</span></li>
+                        {% else %}
+                            <li><a href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if parts.has_next %}
+                        <li><a href="?page={{ parts.next_page_number }}{% if query %}&q={{ query }}{% endif %}">ถัดไป</a></li>
+                    {% else %}
+                        <li class="disabled"><span>ถัดไป</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', function() {
+        const query = this.value;
+        fetch(`?q=${query}`)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.getElementById('table-container').innerHTML;
+                document.getElementById('table-container').innerHTML = newTable;
+            });
+    });
+</script>
+{% endblock %}

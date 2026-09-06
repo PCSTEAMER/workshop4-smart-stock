@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - คลังอะไหล่</title>
+    <!-- โหลด Bootstrap 5 จาก static ในเครื่อง -->
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                
+                <!-- แสดงข้อความแจ้งเตือน (Messages / Error / Warning) -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags %}{{ message.tags }}{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="card shadow">
+                    <div class="card-body p-4">
+                        <h3 class="text-center mb-4">เข้าสู่ระบบคลังอะไหล่</h3>
+                        
+                        <form method="POST" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- วนลูปเรนเดอร์ฟิลด์ฟอร์มพร้อมคลาส Bootstrap -->
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label fw-bold mb-1">
+                                            {% if field.name == 'username' %}ชื่อผู้ใช้ (Username)
+                                            {% elif field.name == 'password' %}รหัสผ่าน (Password)
+                                            {% else %}{{ field.label }}{% endif %}
+                                        </label>
+                                        <!-- ลิงก์ลืมรหัสผ่านข้าง Label รหัสผ่าน -->
+                                        {% if field.name == 'password' %}
+                                            <a href="{% url 'accounts:password_reset' %}" class="small text-decoration-none text-muted">ลืมรหัสผ่าน?</a>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- บังคับใส่คลาส form-control ให้ช่องกรอกข้อมูล -->
+                                    <input type="{% if field.name == 'password' %}password{% else %}text{% endif %}" 
+                                           name="{{ field.name }}" 
+                                           class="form-control" 
+                                           id="{{ field.id_for_label }}"
+                                           {% if field.value %}value="{{ field.value }}"{% endif %}
+                                           required>
+
+                                    {% for error in field.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-success btn-lg">เข้าสู่ระบบ</button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-3">
+                            <p class="mb-2">ยังไม่มีบัญชีใช่ไหม? <a href="{% url 'accounts:register' %}">สมัครสมาชิกที่นี่</a></p>
+                            <a href="/" class="small text-decoration-none text-secondary">← กลับหน้ารายการอะไหล่</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- โหลด Bootstrap 5 JS จาก static ในเครื่อง -->
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

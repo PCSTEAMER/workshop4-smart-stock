@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    :root {
+        --paper: #eef1ee;
+        --panel: #ffffff;
+        --ink: #1c211e;
+        --line: #d7ddd8;
+        --copper: #b2601f;
+        --copper-deep: #8c4a17;
+        --muted: #5c645f;
+        --danger: #9c4130;
+    }
+
+    .page-header {
+        max-width: 640px;
+        margin: 0 auto 1.75rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--line);
+    }
+    .page-header h1 { font-size: 1.5rem; font-weight: 600; color: var(--ink); margin: 0 0 0.35rem; }
+    .page-header p { color: var(--muted); margin: 0; font-size: 0.95rem; }
+
+    .form-wrap { max-width: 640px; margin: 0 auto; }
+    .panel-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 2rem;
+    }
+
+    .field-block { margin-bottom: 0; }
+    .field-block label {
+        display: block;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: var(--ink);
+        margin-bottom: 0.4rem;
+    }
+    .field-block input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+    .field-block select,
+    .field-block textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.95rem;
+        font-family: inherit;
+        background: var(--panel);
+        color: var(--ink);
+    }
+    .field-block input:focus, .field-block select:focus, .field-block textarea:focus {
+        outline: none;
+        border-color: var(--copper);
+    }
+    .field-block input[type="file"] {
+        width: 100%;
+        font-size: 0.88rem;
+        color: var(--muted);
+        padding: 0.3rem 0;
+    }
+    .field-error {
+        color: var(--danger);
+        font-size: 0.85rem;
+        margin-top: 0.4rem;
+        border-left: 2px solid var(--danger);
+        padding-left: 0.5rem;
+    }
+
+    .current-image {
+        border: 1px dashed var(--line);
+        border-radius: 3px;
+        background: var(--paper);
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 0.85rem;
+    }
+    .current-image img { max-height: 130px; object-fit: contain; border-radius: 3px; }
+    .current-image small { display: block; color: var(--muted); margin-top: 0.5rem; font-size: 0.8rem; }
+
+    .form-footer {
+        border-top: 1px solid var(--line);
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+    .btn-cancel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        padding: 0.6rem 1.4rem;
+        border-radius: 6px;
+        font-size: 0.92rem;
+        text-decoration: none;
+        transition: transform 0.12s ease, border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .btn-cancel:hover { border-color: var(--muted); background: var(--paper); color: var(--ink); transform: translateY(-1px); }
+    .btn-cancel:active { transform: translateY(0); }
+    .btn-save {
+        background: linear-gradient(180deg, #c1712e 0%, var(--copper) 55%, var(--copper-deep) 100%);
+        border: 1px solid var(--copper-deep);
+        color: #fff;
+        padding: 0.6rem 1.7rem;
+        border-radius: 6px;
+        font-size: 0.92rem;
+        font-weight: 500;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.15);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .btn-save:hover {
+        transform: translateY(-1px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    .btn-save:active { transform: translateY(0); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3); }
+</style>
+
+<div class="page-header">
+    <h1>
+        {% if part %}แก้ไขอะไหล่: {{ part.name }}{% else %}เพิ่มอะไหล่ใหม่{% endif %}
+    </h1>
+    <p>
+        {% if part %}
+            ปรับปรุงข้อมูลอะไหล่นี้ในคลัง เปลี่ยนเฉพาะช่องที่ต้องการแก้ไข
+        {% else %}
+            กรอกข้อมูลให้ครบถ้วนเพื่อบันทึกอะไหล่ชิ้นนี้เข้าสู่ระบบคลัง
+        {% endif %}
+    </p>
+</div>
+
+<div class="form-wrap">
+    <div class="panel-card">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row g-4">
+                {% for field in form %}
+                    <div class="col-12 {% if field.name == 'part_code' or field.name == 'location' or field.name == 'category' or field.name == 'quantity' or field.name == 'import_date' %}col-md-6{% endif %}">
+                        <div class="field-block">
+                            <label>{{ field.label }}</label>
+
+                            {% if field.name == 'image' and part.image %}
+                                <div class="current-image">
+                                    <img src="{{ part.image.url }}" alt="รูปปัจจุบัน">
+                                    <small>รูปภาพปัจจุบัน (อัปโหลดไฟล์ใหม่เพื่อเปลี่ยนรูป)</small>
+                                </div>
+                            {% endif %}
+
+                            {{ field }}
+
+                            {% if field.errors %}
+                                <div class="field-error">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-footer">
+                <a href="{% url 'part_list' %}" class="btn-cancel">ยกเลิก</a>
+                <button type="submit" class="btn-save">บันทึกข้อมูล</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

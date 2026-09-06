@@ -1,0 +1,133 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบอนุมัติสมาชิก - คลังอะไหล่</title>
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="container mt-5 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>จัดการสถานะผู้ใช้งาน (Admin Approval Dashboard)</h2>
+            <a href="/" class="btn btn-secondary">กลับหน้าหลักคลังอะไหล่</a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags %}{{ message.tags }}{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th>ผู้ใช้งาน (Username)</th>
+                                <th>ชื่อ-นามสกุล</th>
+                                <th>อีเมล / เบอร์โทร</th>
+                                <th>ระดับสิทธิ์</th>
+                                <th>สถานะปัจจุบัน</th>
+                                <th>ดำเนินการโดย</th>
+                                <th class="text-center">การจัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in profiles %}
+                            <tr>
+                                <td><strong>{{ p.user.username }}</strong></td>
+                                <td>{{ p.user.first_name }} {{ p.user.last_name }}</td>
+                                <td>
+                                    {{ p.user.email|default:"-" }}<br>
+                                    <small class="text-muted">{{ p.phone_number|default:"-" }}</small>
+                                </td>
+                                <td>
+                                    {% if p.user.is_superuser %}
+                                        <span class="badge bg-danger">Super Admin</span>
+                                    {% elif p.user.is_staff %}
+                                        <span class="badge bg-warning text-dark">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Member</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if p.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">รออนุมัติ</span>
+                                    {% elif p.status == 'approved' %}
+                                        <span class="badge bg-success">อนุมัติแล้ว</span>
+                                    {% elif p.status == 'rejected' %}
+                                        <span class="badge bg-danger" title="{{ p.rejection_reason }}">ไม่อนุมัติ</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">ถูกระงับ</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if p.approved_by %}
+                                        <small class="text-muted">👤 {{ p.approved_by.username }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if p.user == request.user %}
+                                        <!-- ป้องกันจัดการบัญชีตัวเอง -->
+                                        <span class="badge bg-light text-muted border">บัญชีของคุณ</span>
+                                    {% else %}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            
+                                            <!-- 1. บัญชีรอการอนุมัติ: แสดงเฉพาะปุ่มอนุมัติและปฏิเสธ -->
+                                            {% if p.status == 'pending' %}
+                                                <a href="{% url 'accounts:update_status' p.id 'approve' %}" class="btn btn-success">อนุมัติ</a>
+                                                <a href="{% url 'accounts:update_status' p.id 'reject' %}" class="btn btn-danger" onclick="return confirm('ยืนยันการปฏิเสธบัญชี {{ p.user.username }}?')">ปฏิเสธ</a>
+                                            
+                                            <!-- 2. บัญชีที่อนุมัติแล้ว: ไม่แสดงปุ่มอนุมัติซ้ำ เหลือแค่เลื่อน/ลดสิทธิ์, ระงับ -->
+                                            {% elif p.status == 'approved' %}
+                                                
+                                                <!-- เลื่อนขั้นเป็น Admin / ลดขั้นเป็น Member -->
+                                                {% if not p.user.is_superuser %}
+                                                    {% if p.user.is_staff %}
+                                                        <a href="{% url 'accounts:update_status' p.id 'remove_admin' %}" class="btn btn-outline-warning" onclick="return confirm('ต้องการลดสิทธิ์คุณ {{ p.user.username }} เป็น Member ใช่หรือไม่?')">ลดเป็น Member</a>
+                                                    {% else %}
+                                                        <a href="{% url 'accounts:update_status' p.id 'make_admin' %}" class="btn btn-outline-primary" onclick="return confirm('ต้องการแต่งตั้งคุณ {{ p.user.username }} เป็น Admin ใช่หรือไม่?')">ตั้งเป็น Admin</a>
+                                                    {% endif %}
+                                                {% endif %}
+
+                                                <!-- ปุ่มระงับบัญชี -->
+                                                <a href="{% url 'accounts:update_status' p.id 'suspend' %}" class="btn btn-warning" onclick="return confirm('ยืนยันการระงับบัญชีคุณ {{ p.user.username }}?')">ระงับ</a>
+
+                                            <!-- 3. บัญชีที่ถูกระงับ หรือ ถูกปฏิเสธ: แสดงปุ่มเปิดใช้งานอีกครั้ง -->
+                                            {% elif p.status == 'suspended' or p.status == 'rejected' %}
+                                                <a href="{% url 'accounts:update_status' p.id 'approve' %}" class="btn btn-outline-success" onclick="return confirm('ต้องการเปิดให้ {{ p.user.username }} ใช้งานอีกครั้ง?')">เปิดใช้งานอีกครั้ง</a>
+                                            {% endif %}
+
+                                            <!-- ปุ่มลบบัญชี (ไม่แสดงให้กดลบ Super Admin) -->
+                                            {% if not p.user.is_superuser %}
+                                                <a href="{% url 'accounts:update_status' p.id 'delete_user' %}" class="btn btn-outline-danger" onclick="return confirm('ยืนยันลบบัญชี {{ p.user.username }} ออกจากระบบถาวรหรือไม่?')">ลบบัญชี</a>
+                                            {% endif %}
+
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">ยังไม่มีสมาชิกในระบบ</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
