@@ -117,3 +117,4 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 # Default Primary Key
 # ==========================================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+#ทดสอบว่าไฟล์อัพเดทจริงไหมบน GitHub
