@@ -37,6 +37,7 @@ class SignUpForm(UserCreationForm):
             user.save()
             profile, created = UserProfile.objects.get_or_create(user=user)
             profile.phone_number = self.cleaned_data['phone_number']
+            profile.status = 'pending'  # บังคับให้สถานะเริ่มต้นเป็นรออนุมัติ
             profile.save()
         return user
     
@@ -53,7 +54,7 @@ class UserUpdateForm(forms.ModelForm):
 class UserProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['phone_number', 'profile_picture'] # เพิ่ม phone_number เข้ามาที่นี่
+        fields = ['phone_number', 'profile_picture']
         labels = {
             'phone_number': 'เบอร์โทรศัพท์ติดต่อ',
             'profile_picture': 'อัปโหลดรูปโปรไฟล์'

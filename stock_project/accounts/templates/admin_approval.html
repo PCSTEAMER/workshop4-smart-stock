@@ -98,6 +98,7 @@
         .role-super { background: var(--danger-bg); color: var(--danger); }
         .role-admin { background: #faf2e2; color: var(--copper-deep); }
         .role-member { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
+        .role-guest { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
 
         .status-tag { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 500; }
         .status-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
@@ -206,6 +207,8 @@
                                     <span class="role-tag role-super">Super Admin</span>
                                 {% elif p.user.is_staff %}
                                     <span class="role-tag role-admin">Admin</span>
+                                {% elif p.status == 'pending' %}
+                                    <span class="role-tag role-guest">Guest</span>
                                 {% else %}
                                     <span class="role-tag role-member">Member</span>
                                 {% endif %}
