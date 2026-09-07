@@ -114,6 +114,39 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
 # ==========================================
+# Logging Configuration
+# ==========================================
+# ค่า default ของ Django จะพิมพ์ error ออก console ก็ต่อเมื่อ DEBUG=True เท่านั้น
+# ทำให้ตอน production (DEBUG=False บน Render) exception ที่เกิดขึ้นจริง (เช่นตอน
+# send_mail ผิดพลาด) ไม่โผล่ใน Render Logs เลย เห็นแค่ "500" เฉย ๆ หา sebab ไม่ได้
+# ตั้งค่านี้เพิ่มเพื่อบังคับให้พิมพ์ traceback ออก console เสมอ ไม่ว่า DEBUG จะเป็นอะไร
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
+
+# ==========================================
 # Default Primary Key
 # ==========================================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
