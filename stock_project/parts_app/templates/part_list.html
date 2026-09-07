@@ -135,6 +135,12 @@
         border-left: 3px solid var(--low-stock);
         padding-left: 0.5rem;
     }
+    .qty-empty {
+        color: var(--danger);
+        font-weight: 600;
+        border-left: 3px solid var(--danger);
+        padding-left: 0.5rem;
+    }
 
     .row-actions { display: flex; justify-content: center; align-items: center; gap: 0.4rem; }
     .btn-row-action {
@@ -200,7 +206,6 @@
     }
     .pagination-flat .disabled span { color: var(--muted); background: var(--paper); }
 
-    /* ป้าย Badge สำหรับ Role */
     .role-badge {
         font-size: 0.72rem;
         font-weight: 600;
@@ -226,7 +231,6 @@
     }
 </style>
 
-<!-- Card โปรไฟล์ผู้ใช้ประจำหน้าเว็บ (มุมขวาบนเหนือ Header) -->
 <div class="d-flex justify-content-end mb-3">
     <div class="card shadow-sm border-0 px-3 py-2" style="background-color: #ffffff; border-radius: 30px;">
         <div class="d-flex align-items-center gap-3">
@@ -311,7 +315,9 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if part.quantity < 20 %}
+                                {% if part.quantity <= 0 %}
+                                    <span class="qty-empty">0 ชิ้น — หมด</span>
+                                {% elif part.quantity < 20 %}
                                     <span class="qty-low">{{ part.quantity }} ชิ้น — ใกล้หมด</span>
                                 {% else %}
                                     <span class="qty-ok">{{ part.quantity }} ชิ้น</span>
