@@ -85,7 +85,7 @@ def update_status(request, profile_id, action):
                 message=f'สวัสดีคุณ {target_user.username},\n\nบัญชีของคุณได้รับการอนุมัติให้เข้าใช้งานระบบเรียบร้อยแล้ว โดยผู้ดูแลระบบ: {admin_name}\nสามารถเข้าสู่ระบบเพื่อใช้งานได้ทันที',
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@stock.com'),
                 recipient_list=[target_user.email],
-                fail_silently=True
+                fail_silently=False  # DEBUG ชั่วคราว - เปลี่ยนกลับเป็น True หลังเจอสาเหตุแล้ว
             )
         messages.success(request, f'อนุมัติบัญชีของ {target_user.username} เรียบร้อยแล้ว')
 
@@ -103,7 +103,7 @@ def update_status(request, profile_id, action):
                 message=f'สวัสดีคุณ {target_user.username},\n\nบัญชีของคุณไม่ผ่านการอนุมัติ เนื่องจาก: {reason}\nดำเนินการโดย: {admin_name}',
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@stock.com'),
                 recipient_list=[target_user.email],
-                fail_silently=True
+                fail_silently=False  # DEBUG ชั่วคราว - เปลี่ยนกลับเป็น True หลังเจอสาเหตุแล้ว
             )
         messages.error(request, f'ปฏิเสธบัญชีของ {target_user.username} แล้ว')
 
@@ -127,7 +127,7 @@ def update_status(request, profile_id, action):
                 message=f'สวัสดีคุณ {target_user.username},\n\nคุณได้รับการแต่งตั้งเป็น Admin เรียบร้อยแล้ว โดย: {admin_name}',
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@stock.com'),
                 recipient_list=[target_user.email],
-                fail_silently=True
+                fail_silently=False  # DEBUG ชั่วคราว - เปลี่ยนกลับเป็น True หลังเจอสาเหตุแล้ว
             )
         messages.success(request, f'แต่งตั้งคุณ {target_user.username} เป็น Admin สำเร็จ')
 
