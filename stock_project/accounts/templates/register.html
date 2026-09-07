@@ -5,12 +5,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>สมัครสมาชิก - คลังอะไหล่</title>
-    <!-- Bootstrap 5 CSS CDN -->
+    <!-- Bootstrap 5 CSS -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-</head>
-<body class="bg-light">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper: #eef1ee;
+            --panel: #ffffff;
+            --ink: #1c211e;
+            --line: #d7ddd8;
+            --copper: #b2601f;
+            --copper-deep: #8c4a17;
+            --muted: #5c645f;
+        }
 
-    <div class="container mt-5 mb-5">
+        body {
+            background-color: var(--paper);
+            font-family: 'IBM Plex Sans Thai', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+        }
+
+        .btn-primary-action {
+            background: linear-gradient(180deg, #c1712e 0%, var(--copper) 55%, var(--copper-deep) 100%);
+            color: #fff;
+            border: none;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.25);
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+        .btn-primary-action:hover {
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-control:focus {
+            border-color: var(--copper);
+            box-shadow: 0 0 0 0.2rem rgba(178, 96, 31, 0.25);
+        }
+
+        a {
+            color: var(--copper);
+        }
+        a:hover {
+            color: var(--copper-deep);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
                 
@@ -23,16 +76,16 @@
                     {% endfor %}
                 {% endif %}
 
-                <div class="card shadow">
-                    <div class="card-body p-4">
-                        <h3 class="text-center mb-4">สมัครสมาชิกคลังอะไหล่</h3>
+                <div class="card shadow-sm">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="text-center mb-4 fw-bold" style="color: var(--ink);">สมัครสมาชิกคลังอะไหล่</h3>
                         
                         <form method="POST" novalidate>
                             {% csrf_token %}
                             
                             {% for field in form %}
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold">{{ field.label }}</label>
+                                    <label class="form-label fw-semibold small text-secondary">{{ field.label }}</label>
                                     {{ field }}
                                     {% if field.help_text %}
                                         <div class="form-text text-muted small">{{ field.help_text|safe }}</div>
@@ -44,12 +97,12 @@
                             {% endfor %}
 
                             <div class="d-grid gap-2 mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg">ลงทะเบียน</button>
+                                <button type="submit" class="btn btn-primary-action btn-lg">ลงทะเบียน</button>
                             </div>
                         </form>
 
-                        <div class="text-center mt-3">
-                            <p class="mb-0">มีบัญชีอยู่แล้ว? <a href="{% url 'accounts:login' %}">เข้าสู่ระบบที่นี่</a></p>
+                        <div class="text-center mt-4">
+                            <p class="mb-0 small text-muted">มีบัญชีอยู่แล้ว? <a href="{% url 'accounts:login' %}" class="fw-semibold text-decoration-none">เข้าสู่ระบบที่นี่</a></p>
                         </div>
                     </div>
                 </div>
@@ -58,7 +111,7 @@
         </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle CDN -->
+    <!-- Bootstrap 5 JS -->
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

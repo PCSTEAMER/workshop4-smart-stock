@@ -6,8 +6,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_POST
 from django.core.mail import send_mail
 from django.conf import settings
-from .forms import SignUpForm
+from django.db.models import Case, When, IntegerField
+from .forms import SignUpForm, UserUpdateForm, UserProfileUpdateForm
 from .models import UserProfile
+from django.contrib.auth.decorators import login_required
 
 def register_view(request):
     if request.method == 'POST':
@@ -59,12 +61,18 @@ def logout_view(request):
 
 @staff_member_required
 def admin_approval_list(request):
-    profiles = UserProfile.objects.select_related('user', 'approved_by').all().order_by('id')
+    # จัดลำดับการแสดงผล: Super Admin (1) -> Admin (2) -> Member/อื่นๆ (3)
+    profiles = UserProfile.objects.select_related('user', 'approved_by').annotate(
+        role_priority=Case(
+            When(user__is_superuser=True, then=1),
+            When(user__is_staff=True, then=2),
+            default=3,
+            output_field=IntegerField(),
+        )
+    ).order_by('role_priority', 'id')
+    
     return render(request, 'admin_approval.html', {'profiles': profiles})
 
-# ทุก action ในนี้แก้ไขข้อมูลจริง (อนุมัติ/ปฏิเสธ/ระงับ/ให้สิทธิ์/ลบบัญชี)
-# จึงบังคับให้เป็น POST เท่านั้น (require_POST) เพื่อปิดช่องโหว่ CSRF ที่เคยเกิดจากการ
-# ยิง action ผ่าน GET link ตรง ๆ — ถ้ามีการเรียกด้วย GET จะได้ 405 Method Not Allowed ทันที
 @staff_member_required
 @require_POST
 def update_status(request, profile_id, action):
@@ -72,10 +80,15 @@ def update_status(request, profile_id, action):
     target_user = profile.user
     admin_name = request.user.get_full_name() or request.user.username
 
+    # 🔒 ป้องกันเด็ดขาด: ห้ามแก้ไข ปรับสิทธิ์ หรือระงับบัญชีของ Super Admin โดยเด็ดขาด
+    if target_user.is_superuser:
+        messages.error(request, 'ไม่อนุญาตให้เปลี่ยนแปลงสิทธิ์หรือกระทำการใดๆ กับบัญชี Super Admin')
+        return redirect('accounts:admin_approval')
+
     # 1. อนุมัติการใช้งาน (Member) + ส่งเมลแจ้งเตือน
     if action == 'approve':
         profile.status = 'approved'
-        profile.role = 'member'  # แก้เป็นตัวพิมพ์เล็กตามฐานข้อมูล
+        profile.role = 'member'  
         profile.approved_by = request.user
         profile.rejection_reason = ""
         profile.save()
@@ -119,7 +132,7 @@ def update_status(request, profile_id, action):
     elif action == 'make_admin':
         target_user.is_staff = True
         target_user.save()
-        profile.role = 'admin'  # แก้เป็นตัวพิมพ์เล็กตามฐานข้อมูล
+        profile.role = 'admin'  
         profile.approved_by = request.user
         profile.save()
 
@@ -140,20 +153,44 @@ def update_status(request, profile_id, action):
         else:
             target_user.is_staff = False
             target_user.save()
-            profile.role = 'member'  # แก้เป็นตัวพิมพ์เล็กตามฐานข้อมูล
+            profile.role = 'member'  
             profile.approved_by = request.user
             profile.save()
             messages.info(request, f'ปรับลดสิทธิ์ {target_user.username} เป็น Member เรียบร้อยแล้ว')
 
-    # 6. ลบบัญชีผู้ใช้ออกจากระบบ (ข้อมูลประวัติการเบิกจะไม่สูญหาย)
+    # 6. ลบบัญชีผู้ใช้ออกจากระบบ
     elif action == 'delete_user':
         if target_user == request.user:
             messages.error(request, 'คุณไม่สามารถลบบัญชีของตัวเองได้')
-        elif target_user.is_superuser:
-            messages.error(request, 'ไม่อนุญาตให้ลบบัญชี Super Admin')
         else:
             deleted_username = target_user.username
             target_user.delete()
             messages.success(request, f'ลบบัญชี {deleted_username} ออกจากระบบเรียบร้อยแล้ว')
 
     return redirect('accounts:admin_approval')
+
+@login_required
+def edit_profile(request):
+    profile, created = UserProfile.objects.get_or_create(
+        user=request.user,
+        defaults={'status': 'approved', 'role': 'admin' if request.user.is_superuser else 'member'}
+    )
+
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = UserProfileUpdateForm(request.POST, request.FILES, instance=profile)
+        
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, 'อัปเดตข้อมูลส่วนตัวเรียบร้อยแล้ว!')
+            return redirect('accounts:edit_profile')
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = UserProfileUpdateForm(instance=profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    return render(request, 'edit_profile.html', context)

@@ -11,6 +11,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('admin/approval/', views.admin_approval_list, name='admin_approval'),
     path('admin/approval/action/<int:profile_id>/<str:action>/', views.update_status, name='update_status'),
+    path('profile/', views.edit_profile, name='edit_profile'),
 
     # 1. หน้ากรอกอีเมลเพื่อขอรีเซ็ตรหัสผ่าน
     path(

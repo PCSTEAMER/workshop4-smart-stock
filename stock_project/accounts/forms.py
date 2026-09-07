@@ -39,3 +39,22 @@ class SignUpForm(UserCreationForm):
             profile.phone_number = self.cleaned_data['phone_number']
             profile.save()
         return user
+    
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name']
+        labels = {
+            'username': 'ชื่อผู้ใช้ (Username)',
+            'first_name': 'ชื่อจริง',
+            'last_name': 'นามสกุล'
+        }
+
+class UserProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['phone_number', 'profile_picture'] # เพิ่ม phone_number เข้ามาที่นี่
+        labels = {
+            'phone_number': 'เบอร์โทรศัพท์ติดต่อ',
+            'profile_picture': 'อัปโหลดรูปโปรไฟล์'
+        }

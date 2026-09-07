@@ -41,7 +41,7 @@
             to { opacity: 1; }
         }
 
-        /* แถบโหลดด้านบน: บางและไว ไม่หน่วงตอนรีบกดเปลี่ยนหน้า */
+        /* แถบโหลดด้านบน */
         #page-loader {
             position: fixed;
             top: 0;
@@ -144,16 +144,18 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 1rem;
-            border-radius: 3px;
+            border-radius: 6px;
             padding: 0.85rem 1rem;
             font-size: 0.92rem;
             margin-bottom: 0.75rem;
-            border-left: 3px solid;
+            border-left: 4px solid;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: opacity 0.3s ease;
         }
-        .alert-flat.success { background: #eaf3ea; border-color: #3a6b3f; color: var(--ink); }
-        .alert-flat.error { background: #f6e9e6; border-color: #9c4130; color: var(--ink); }
-        .alert-flat.warning { background: #faf2e2; border-color: var(--copper); color: var(--ink); }
-        .alert-flat.info { background: var(--paper); border-color: var(--muted); color: var(--ink); }
+        .alert-flat.success { background: #eaf3ea; border-color: #3a6b3f; color: #1c211e; }
+        .alert-flat.error { background: #f6e9e6; border-color: #9c4130; color: #1c211e; }
+        .alert-flat.warning { background: #faf2e2; border-color: var(--copper); color: #1c211e; }
+        .alert-flat.info { background: var(--paper); border-color: var(--muted); color: #1c211e; }
         .alert-flat .alert-close {
             background: none;
             border: none;
@@ -169,7 +171,6 @@
             outline: 2px solid var(--copper);
             outline-offset: 2px;
         }
-
         @media (prefers-reduced-motion: reduce) {
             main { animation: none; }
         }
@@ -203,6 +204,18 @@
                     <li class="nav-item my-1 my-lg-0">
                         <a class="btn btn-action-menu btn-primary-action" href="{% url 'transaction_create' %}">เบิก-จ่ายอะไหล่</a>
                     </li>
+
+                    {% if user.is_authenticated %}
+                        <li class="nav-item my-1 my-lg-0 ms-lg-3 border-start border-secondary ps-lg-3 d-flex flex-wrap gap-2">
+                            <a class="btn btn-action-menu btn-secondary-action" href="{% url 'accounts:edit_profile' %}">✏️ แก้ไขโปรไฟล์</a>
+                            
+                            {% if user.is_staff %}
+                                <a class="btn btn-action-menu" style="background-color: #eab308; color: #1c211e;" href="{% url 'accounts:admin_approval' %}">⚙️ จัดการสมาชิก</a>
+                            {% endif %}
+                            
+                            <a class="btn btn-action-menu" style="border: 1px solid #dc3545; color: #dc3545;" href="{% url 'accounts:logout' %}">ออกจากระบบ</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -210,12 +223,14 @@
 
     <main class="container my-5">
         {% if messages %}
-            {% for message in messages %}
-                <div class="alert-flat {% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %}">
-                    <span>{{ message }}</span>
-                    <button type="button" class="alert-close" onclick="this.parentElement.remove()" aria-label="ปิด">&times;</button>
-                </div>
-            {% endfor %}
+            <div id="message-container">
+                {% for message in messages %}
+                    <div class="alert-flat {% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %}">
+                        <span>{{ message }}</span>
+                        <button type="button" class="alert-close" onclick="this.closest('.alert-flat').remove()" aria-label="ปิด">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
         {% block content %}{% endblock %}
@@ -231,6 +246,15 @@
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script>
         (function () {
+            // ระบบซ่อนแจ้งเตือนอัตโนมัติหลังผ่านไป 4 วินาที
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert-flat');
+                alerts.forEach(function(alert) {
+                    alert.style.opacity = '0';
+                    setTimeout(function() { alert.remove(); }, 300);
+                });
+            }, 4000);
+
             var loader = document.getElementById('page-loader');
 
             function startLoader() {
@@ -251,7 +275,6 @@
 
             window.addEventListener('load', finishLoader);
 
-            // นำทางไปทันที ไม่หน่วงรอแอนิเมชันจบ แค่โชว์แถบระหว่างรอหน้าใหม่โหลด
             document.addEventListener('click', function (e) {
                 var link = e.target.closest('a');
                 if (!link || !link.getAttribute('href')) return;

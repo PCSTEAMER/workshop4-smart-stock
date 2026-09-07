@@ -202,9 +202,9 @@
 
     /* ป้าย Badge สำหรับ Role */
     .role-badge {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 600;
-        padding: 0.2rem 0.55rem;
+        padding: 0.15rem 0.5rem;
         border-radius: 4px;
         display: inline-block;
         vertical-align: middle;
@@ -226,36 +226,39 @@
     }
 </style>
 
-<!-- เมนูแถบบน: แสดง Role ผู้ใช้ หรือ Guest เมื่อยังไม่ล็อกอิน -->
-<div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded border">
-    <div>
-        {% if request.user.is_authenticated %}
-            <span class="me-3">
-                👤 เข้าสู่ระบบโดย: <strong>{{ request.user.username }}</strong>
-                {% if request.user.is_staff or request.user.is_superuser %}
-                    <span class="role-badge role-admin">Admin</span>
+<!-- Card โปรไฟล์ผู้ใช้ประจำหน้าเว็บ (มุมขวาบนเหนือ Header) -->
+<div class="d-flex justify-content-end mb-3">
+    <div class="card shadow-sm border-0 px-3 py-2" style="background-color: #ffffff; border-radius: 30px;">
+        <div class="d-flex align-items-center gap-3">
+            <div>
+                {% if request.user.is_authenticated %}
+                    {% if request.user.profile.profile_picture %}
+                        <img src="{{ request.user.profile.profile_picture.url }}" class="rounded-circle shadow-sm" style="width: 38px; height: 38px; object-fit: cover; border: 2px solid #b2601f;">
+                    {% else %}
+                        <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=b2601f&color=fff&size=38" class="rounded-circle shadow-sm" style="border: 2px solid #b2601f;">
+                    {% endif %}
                 {% else %}
-                    <span class="role-badge role-member">Member</span>
+                    <img src="https://ui-avatars.com/api/?name=Guest&background=64748b&color=fff&size=38" class="rounded-circle shadow-sm">
                 {% endif %}
-            </span>
-        {% else %}
-            <span class="me-3">
-                👤 สถานะ: <strong>ผู้เยี่ยมชม</strong>
-                <span class="role-badge role-guest">Guest</span>
-            </span>
-        {% endif %}
-    </div>
-    <div>
-        {% if request.user.is_staff or request.user.is_superuser %}
-            <a href="{% url 'accounts:admin_approval' %}" class="btn btn-dark btn-sm me-2">⚙️ จัดการอนุมัติสมาชิก</a>
-        {% endif %}
-        
-        {% if request.user.is_authenticated %}
-            <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm">ออกจากระบบ</a>
-        {% else %}
-            <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm me-2">เข้าสู่ระบบ</a>
-            <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">สมัครสมาชิก</a>
-        {% endif %}
+            </div>
+            
+            <div class="small">
+                {% if request.user.is_authenticated %}
+                    <span class="text-muted">ผู้ใช้งาน:</span> 
+                    <strong class="text-dark">{{ request.user.username }}</strong>
+                    {% if request.user.is_staff or request.user.is_superuser %}
+                        <span class="role-badge role-admin ms-1">Admin</span>
+                    {% else %}
+                        <span class="role-badge role-member ms-1">Member</span>
+                    {% endif %}
+                {% else %}
+                    <span class="text-muted">สถานะ:</span> 
+                    <strong class="text-dark">ผู้เยี่ยมชม</strong>
+                    <span class="role-badge role-guest ms-1">Guest</span>
+                    <a href="{% url 'accounts:login' %}" class="ms-2 text-decoration-none fw-bold" style="color: #b2601f;">เข้าสู่ระบบ</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 
@@ -317,7 +320,6 @@
                             <td>
                                 <div class="row-actions">
                                     {% if request.user.is_authenticated %}
-                                        <!-- ปุ่มเบิก/รับ สำหรับคนที่เข้าสู่ระบบแล้ว -->
                                         <a href="{% url 'transaction_create' %}?part_id={{ part.pk }}" class="btn-row-action btn-action-tx">เบิก/รับ</a>
                                         
                                         {% if request.user.is_staff or request.user.is_superuser %}
@@ -325,7 +327,6 @@
                                             <a href="{% url 'part_delete' part.pk %}" class="btn-row-action btn-delete">ลบ</a>
                                         {% endif %}
                                     {% else %}
-                                        <!-- สำหรับ Guest ที่ยังไม่ล็อกอิน -->
                                         <span class="text-muted" style="font-size: 0.8rem;">- เฉพาะแอดมิน -</span>
                                     {% endif %}
                                 </div>

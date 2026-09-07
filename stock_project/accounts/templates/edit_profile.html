@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- เรียกใช้ CSS ของ Cropper.js -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="card shadow border-0" style="border-radius: 8px;">
+                <div class="card-body p-4 p-md-5">
+                    
+                    <!-- ส่วนหัวการ์ด พร้อมปุ่มย้อนกลับ -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <a href="{% url 'part_list' %}" class="btn btn-outline-secondary btn-sm">
+                            ← กลับหน้าหลัก
+                        </a>
+                        <h4 class="mb-0 fw-bold" style="color: #1c211e;">แก้ไขข้อมูลส่วนตัว</h4>
+                        <div style="width: 80px;"></div>
+                    </div>
+                    
+                    <!-- โชว์รูปโปรไฟล์ปัจจุบัน -->
+                    <div class="text-center mb-4">
+                        {% if user.profile.profile_picture %}
+                            <img src="{{ user.profile.profile_picture.url }}" class="rounded-circle shadow-sm" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #b2601f;" id="current-profile-pic">
+                        {% else %}
+                            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=b2601f&color=fff&size=120" class="rounded-circle shadow-sm" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #b2601f;" id="current-profile-pic">
+                        {% endif %}
+                        <div class="text-muted small mt-2">คลิกเลือกรูปภาพด้านล่างเพื่อเปลี่ยนโปรไฟล์</div>
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data" id="profile-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary small">ชื่อผู้ใช้ (Username)</label>
+                            {{ u_form.username }}
+                            <div class="form-text" style="font-size: 0.78rem;">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-secondary small">ชื่อจริง</label>
+                                {{ u_form.first_name }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-secondary small">นามสกุล</label>
+                                {{ u_form.last_name }}
+                            </div>
+                        </div>
+
+                        <!-- เพิ่มช่องเบอร์โทรศัพท์ -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary small">เบอร์โทรศัพท์ติดต่อ</label>
+                            {{ p_form.phone_number }}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold text-secondary small">อัปโหลดรูปโปรไฟล์ใหม่ (อัตราส่วน 1:1)</label>
+                            <div class="input-group">
+                                {{ p_form.profile_picture }}
+                            </div>
+                            <div class="form-text" style="font-size: 0.78rem;">เลือกภาพจากเครื่อง ระบบจะเปิดหน้าต่างตัดแต่งรูปภาพให้อัตโนมัติ</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(180deg, #c1712e 0%, #b2601f 55%, #8c4a17 100%); border: none;">บันทึกข้อมูลส่วนตัว</button>
+                        </div>
+                    </form>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal สำหรับ Crop รูป -->
+<div class="modal fade" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="cropModalLabel">✂️ ปรับแต่งและตัดรูปโปรไฟล์ (สัดส่วน 1:1)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center bg-dark">
+        <div class="img-container" style="max-height: 450px; display: inline-block;">
+            <img id="image-to-crop" src="" style="max-width: 100%; display: block;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+        <button type="button" class="btn btn-success px-4" id="crop-btn">ยืนยันการตัดรูป</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS จัดสไตล์ฟอร์มให้เนียนตา -->
+<style>
+    #profile-form input[type="text"], 
+    #profile-form input[type="email"], 
+    #profile-form input[type="file"] {
+        display: block;
+        width: 100%;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.95rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    }
+    #profile-form input:focus {
+        border-color: #b2601f;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(178, 96, 31, 0.25);
+    }
+</style>
+
+<!-- เรียกใช้ JS ของ Cropper.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+    const fileInput = document.getElementById('id_profile_picture');
+    const imageToCrop = document.getElementById('image-to-crop');
+    const cropModal = new bootstrap.Modal(document.getElementById('cropModal'));
+    let cropper;
+
+    fileInput.addEventListener('change', function (e) {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function (event) {
+                imageToCrop.src = event.target.result;
+                cropModal.show();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('cropModal').addEventListener('shown.bs.modal', function () {
+        cropper = new Cropper(imageToCrop, {
+            aspectRatio: 1,
+            viewMode: 2,
+            autoCropArea: 1,
+        });
+    });
+
+    document.getElementById('cropModal').addEventListener('hidden.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    });
+
+    document.getElementById('crop-btn').addEventListener('click', function () {
+        if (cropper) {
+            cropper.getCroppedCanvas({
+                width: 500,
+                height: 500
+            }).toBlob(function (blob) {
+                const file = new File([blob], 'cropped_profile.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                
+                document.getElementById('current-profile-pic').src = URL.createObjectURL(blob);
+                cropModal.hide();
+            }, 'image/jpeg');
+        }
+    });
+</script>
+{% endblock %}

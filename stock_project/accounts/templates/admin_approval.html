@@ -140,7 +140,6 @@
         .btn-promote, .btn-demote { color: var(--ink); }
         .btn-promote:hover, .btn-demote:hover { background: var(--paper); border-color: var(--muted); }
 
-        /* Modal ปฏิเสธ: ปรับให้เข้าธีมร้านแทนสไตล์ Bootstrap default */
         .modal-content {
             border: 1px solid var(--line);
             border-radius: 4px;
@@ -230,7 +229,9 @@
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                {% if p.user == request.user %}
+                                {% if p.user.is_superuser %}
+                                    <span class="self-tag" style="border-color: var(--danger); color: var(--danger);">Super Admin (ล็อกสิทธิ์)</span>
+                                {% elif p.user == request.user %}
                                     <span class="self-tag">บัญชีของคุณ</span>
                                 {% else %}
                                     <div class="row-actions">
@@ -246,18 +247,16 @@
                                                     data-username="{{ p.user.username }}">ปฏิเสธ</button>
 
                                         {% elif p.status == 'approved' %}
-                                            {% if not p.user.is_superuser %}
-                                                {% if p.user.is_staff %}
-                                                    <form method="POST" action="{% url 'accounts:update_status' p.id 'remove_admin' %}" onsubmit="return confirm('ต้องการลดสิทธิ์ {{ p.user.username }} เป็น Member ใช่หรือไม่?');">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="btn-row-action btn-demote">ลดเป็น Member</button>
-                                                    </form>
-                                                {% else %}
-                                                    <form method="POST" action="{% url 'accounts:update_status' p.id 'make_admin' %}" onsubmit="return confirm('ต้องการแต่งตั้ง {{ p.user.username }} เป็น Admin ใช่หรือไม่?');">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="btn-row-action btn-promote">ตั้งเป็น Admin</button>
-                                                    </form>
-                                                {% endif %}
+                                            {% if p.user.is_staff %}
+                                                <form method="POST" action="{% url 'accounts:update_status' p.id 'remove_admin' %}" onsubmit="return confirm('ต้องการลดสิทธิ์ {{ p.user.username }} เป็น Member ใช่หรือไม่?');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn-row-action btn-demote">ลดเป็น Member</button>
+                                                </form>
+                                            {% else %}
+                                                <form method="POST" action="{% url 'accounts:update_status' p.id 'make_admin' %}" onsubmit="return confirm('ต้องการแต่งตั้ง {{ p.user.username }} เป็น Admin ใช่หรือไม่?');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn-row-action btn-promote">ตั้งเป็น Admin</button>
+                                                </form>
                                             {% endif %}
                                             <form method="POST" action="{% url 'accounts:update_status' p.id 'suspend' %}" onsubmit="return confirm('ยืนยันการระงับบัญชี {{ p.user.username }}?');">
                                                 {% csrf_token %}
@@ -271,12 +270,10 @@
                                             </form>
                                         {% endif %}
 
-                                        {% if not p.user.is_superuser %}
-                                            <form method="POST" action="{% url 'accounts:update_status' p.id 'delete_user' %}" onsubmit="return confirm('ยืนยันลบบัญชี {{ p.user.username }} ออกจากระบบถาวรหรือไม่?');">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn-row-action btn-delete">ลบบัญชี</button>
-                                            </form>
-                                        {% endif %}
+                                        <form method="POST" action="{% url 'accounts:update_status' p.id 'delete_user' %}" onsubmit="return confirm('ยืนยันลบบัญชี {{ p.user.username }} ออกจากระบบถาวรหรือไม่?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-row-action btn-delete">ลบบัญชี</button>
+                                        </form>
 
                                     </div>
                                 {% endif %}
@@ -293,7 +290,7 @@
         </div>
     </div>
 
-    <!-- Modal ปฏิเสธ: ใช้ร่วมกันทุกแถว เปลี่ยน action ปลายทางด้วย JS ตอนเปิด -->
+    <!-- Modal ปฏิเสธ -->
     <div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
