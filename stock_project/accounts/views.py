@@ -75,6 +75,7 @@ def update_status(request, profile_id, action):
     # 1. อนุมัติการใช้งาน (Member) + ส่งเมลแจ้งเตือน
     if action == 'approve':
         profile.status = 'approved'
+        profile.role = 'member'  # แก้เป็นตัวพิมพ์เล็กตามฐานข้อมูล
         profile.approved_by = request.user
         profile.rejection_reason = ""
         profile.save()
@@ -85,7 +86,7 @@ def update_status(request, profile_id, action):
                 message=f'สวัสดีคุณ {target_user.username},\n\nบัญชีของคุณได้รับการอนุมัติให้เข้าใช้งานระบบเรียบร้อยแล้ว โดยผู้ดูแลระบบ: {admin_name}\nสามารถเข้าสู่ระบบเพื่อใช้งานได้ทันที',
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@stock.com'),
                 recipient_list=[target_user.email],
-                fail_silently=True  # DEBUG ชั่วคราว - เปลี่ยนกลับเป็น True หลังเจอสาเหตุแล้ว
+                fail_silently=True  
             )
         messages.success(request, f'อนุมัติบัญชีของ {target_user.username} เรียบร้อยแล้ว')
 
@@ -103,7 +104,7 @@ def update_status(request, profile_id, action):
                 message=f'สวัสดีคุณ {target_user.username},\n\nบัญชีของคุณไม่ผ่านการอนุมัติ เนื่องจาก: {reason}\nดำเนินการโดย: {admin_name}',
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@stock.com'),
                 recipient_list=[target_user.email],
-                fail_silently=True  # DEBUG ชั่วคราว - เปลี่ยนกลับเป็น True หลังเจอสาเหตุแล้ว
+                fail_silently=True  
             )
         messages.error(request, f'ปฏิเสธบัญชีของ {target_user.username} แล้ว')
 
@@ -118,6 +119,7 @@ def update_status(request, profile_id, action):
     elif action == 'make_admin':
         target_user.is_staff = True
         target_user.save()
+        profile.role = 'admin'  # แก้เป็นตัวพิมพ์เล็กตามฐานข้อมูล
         profile.approved_by = request.user
         profile.save()
 
@@ -127,7 +129,7 @@ def update_status(request, profile_id, action):
                 message=f'สวัสดีคุณ {target_user.username},\n\nคุณได้รับการแต่งตั้งเป็น Admin เรียบร้อยแล้ว โดย: {admin_name}',
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@stock.com'),
                 recipient_list=[target_user.email],
-                fail_silently=True  # DEBUG ชั่วคราว - เปลี่ยนกลับเป็น True หลังเจอสาเหตุแล้ว
+                fail_silently=True  
             )
         messages.success(request, f'แต่งตั้งคุณ {target_user.username} เป็น Admin สำเร็จ')
 
@@ -138,6 +140,7 @@ def update_status(request, profile_id, action):
         else:
             target_user.is_staff = False
             target_user.save()
+            profile.role = 'member'  # แก้เป็นตัวพิมพ์เล็กตามฐานข้อมูล
             profile.approved_by = request.user
             profile.save()
             messages.info(request, f'ปรับลดสิทธิ์ {target_user.username} เป็น Member เรียบร้อยแล้ว')
