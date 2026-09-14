@@ -7,7 +7,7 @@
     <title>ระบบคลังอะไหล่ร้านซ่อมเครื่องใช้ไฟฟ้า</title>
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         :root {
             --paper: #eef1ee;
@@ -20,20 +20,20 @@
         }
         * { box-sizing: border-box; }
 
-        html { font-size: 108%; }
+        html { font-size: 115%; }
 
         body {
             background-color: var(--paper);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            font-family: 'IBM Plex Sans Thai', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Sarabun', 'Segoe UI', system-ui, -apple-system, sans-serif;
             color: var(--ink);
             line-height: 1.6;
         }
         main {
             flex: 1;
-            font-size: 1.02rem;
+            font-size: 1.1rem;
             animation: pageFadeIn 0.3s ease-out forwards;
         }
         @keyframes pageFadeIn {
@@ -72,8 +72,8 @@
             gap: 8px;
         }
         .navbar-brand .brand-sub {
-            font-family: 'IBM Plex Sans Thai', sans-serif;
-            font-size: 0.85rem;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 0.95rem;
             color: #9aa39c;
             font-weight: 400;
         }
@@ -124,6 +124,20 @@
             transform: translateY(-1px);
         }
         .btn-secondary-action:active { transform: translateY(0); }
+
+        /* ปุ่มเมนูงานซ่อม */
+        .btn-service-admin {
+            border: 1px solid var(--copper); color: #f4f0e8; background: rgba(178, 96, 31, 0.1);
+        }
+        .btn-service-admin:hover {
+            background: rgba(178, 96, 31, 0.2); border-color: var(--copper-deep); color: #fff;
+        }
+        .btn-service-member {
+            border: 1px solid #4a7c59; color: #f4f0e8; background: rgba(74, 124, 89, 0.1);
+        }
+        .btn-service-member:hover {
+            background: rgba(74, 124, 89, 0.2); border-color: #3a6b3f; color: #fff;
+        }
 
         .custom-footer {
             background: var(--panel);
@@ -179,6 +193,8 @@
 <body>
     <div id="page-loader"></div>
 
+    <!-- ครอบ block navbar ไว้ตรงนี้ -->
+    {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-dark custom-navbar sticky-top">
         <div class="container-fluid px-lg-4">
             <a class="navbar-brand" href="{% url 'part_list' %}">
@@ -206,6 +222,15 @@
                     </li>
 
                     {% if user.is_authenticated %}
+                        <!-- 🌟 เมนูระบบงานซ่อม (Service Management) -->
+                        <li class="nav-item my-1 my-lg-0 ms-lg-2">
+                            {% if user.is_staff or user.is_superuser %}
+                                <a class="btn btn-action-menu btn-service-admin" href="{% url 'services:job_list' %}">🛠️ จัดการงานซ่อม</a>
+                            {% else %}
+                                <a class="btn btn-action-menu btn-service-member" href="{% url 'services:job_list' %}">📋 งานของฉัน</a>
+                            {% endif %}
+                        </li>
+                        
                         <li class="nav-item my-1 my-lg-0 ms-lg-3 border-start border-secondary ps-lg-3 d-flex flex-wrap gap-2">
                             <a class="btn btn-action-menu btn-secondary-action" href="{% url 'accounts:edit_profile' %}">✏️ แก้ไขโปรไฟล์</a>
                             
@@ -220,6 +245,8 @@
             </div>
         </div>
     </nav>
+    {% endblock %}
+    <!-- สิ้นสุด block navbar -->
 
     <main class="container my-5">
         {% if messages %}

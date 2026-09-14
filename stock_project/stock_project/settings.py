@@ -25,10 +25,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
     # Custom Apps
     'parts_app',
     'accounts',
+    'services',
+    # เอาไว้ลบไฟล์รูปภาพเก่าอัตโนมัติเมื่อมีการอัปโหลดไฟล์ใหม่
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 MIDDLEWARE = [

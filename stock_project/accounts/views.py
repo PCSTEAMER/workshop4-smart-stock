@@ -6,7 +6,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_POST
 from django.core.mail import send_mail
 from django.conf import settings
-from django.db.models import Case, When, IntegerField
+from django.db.models import Case, When, IntegerField, Q
+from django.core.paginator import Paginator
 from .forms import SignUpForm, UserUpdateForm, UserProfileUpdateForm
 from .models import UserProfile
 from django.contrib.auth.decorators import login_required
@@ -61,17 +62,36 @@ def logout_view(request):
 
 @staff_member_required
 def admin_approval_list(request):
-    # จัดลำดับการแสดงผล: Super Admin (1) -> Admin (2) -> Member/อื่นๆ (3)
-    profiles = UserProfile.objects.select_related('user', 'approved_by').annotate(
+    query = request.GET.get('q', '')
+    
+    # ฐานคำสั่ง จัดลำดับการแสดงผล: Super Admin (1) -> Admin (2) -> Member/อื่นๆ (3)
+    profiles_query = UserProfile.objects.select_related('user', 'approved_by').annotate(
         role_priority=Case(
             When(user__is_superuser=True, then=1),
             When(user__is_staff=True, then=2),
             default=3,
             output_field=IntegerField(),
         )
-    ).order_by('role_priority', 'id')
+    )
+
+    # 🌟 ระบบค้นหา (กรองตาม username, ชื่อ, นามสกุล หรืออีเมล)
+    if query:
+        profiles_query = profiles_query.filter(
+            Q(user__username__icontains=query) |
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(user__email__icontains=query)
+        )
+
+    # นำข้อมูลที่ได้มาจัดเรียง
+    profiles_list = profiles_query.order_by('role_priority', '-id')
+
+    # 🌟 ระบบแบ่งหน้า (15 รายการต่อหน้า)
+    paginator = Paginator(profiles_list, 15)
+    page_number = request.GET.get('page')
+    profiles = paginator.get_page(page_number)
     
-    return render(request, 'admin_approval.html', {'profiles': profiles})
+    return render(request, 'admin_approval.html', {'profiles': profiles, 'query': query})
 
 @staff_member_required
 @require_POST

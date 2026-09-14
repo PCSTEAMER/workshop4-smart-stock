@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
 <style>
     :root {
         --paper: #eef1ee;
@@ -60,7 +59,6 @@
     }
     .btn-primary-action:active { transform: translateY(0); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3); }
 
-    /* ปุ่มดาวน์โหลด Excel สไตล์คุมโทนเดียวกัน */
     .btn-excel-action {
         background: #ffffff;
         color: #2b5434;
@@ -148,6 +146,42 @@
 
     .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--muted); }
     .empty-state h4 { color: var(--ink); font-size: 1.05rem; font-weight: 600; margin: 0; }
+
+    /* CSS สำหรับแถบแบ่งหน้า (Pagination) */
+    .pagination-container {
+        padding: 1rem;
+        background: var(--panel);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-top: 1px solid var(--line);
+    }
+    .step-links {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-page {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--ink);
+        padding: 0.35rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+    .btn-page:hover {
+        background: var(--paper);
+        border-color: var(--copper);
+        color: var(--copper-deep);
+    }
+    .current-page {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin: 0 0.75rem;
+        font-weight: 500;
+    }
 </style>
 
 <div class="page-header">
@@ -156,7 +190,6 @@
         <p>บันทึกความเคลื่อนไหวของคลังอะไหล่ทั้งหมด ทั้งการนำเข้าและเบิกออก</p>
     </div>
     <div class="header-actions">
-        <!-- 🌟 ปุ่มดาวน์โหลด Excel ที่เพิ่มเข้ามา -->
         <a href="{% url 'export_transactions_excel' %}" class="btn-excel-action">
             📥 ดาวน์โหลด Excel
         </a>
@@ -209,5 +242,26 @@
             </tbody>
         </table>
     </div>
+
+    <!-- ส่วนควบคุมการแบ่งหน้า (Pagination) -->
+    {% if transactions.has_other_pages %}
+    <div class="pagination-container">
+        <div class="step-links">
+            {% if transactions.has_previous %}
+                <a href="?page=1" class="btn-page">&laquo; หน้าแรก</a>
+                <a href="?page={{ transactions.previous_page_number }}" class="btn-page">ก่อนหน้า</a>
+            {% endif %}
+
+            <span class="current-page">
+                หน้า {{ transactions.number }} จาก {{ transactions.paginator.num_pages }}
+            </span>
+
+            {% if transactions.has_next %}
+                <a href="?page={{ transactions.next_page_number }}" class="btn-page">ถัดไป</a>
+                <a href="?page={{ transactions.paginator.num_pages }}" class="btn-page">หน้าสุดท้าย &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

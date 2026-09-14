@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+    .page-wrap { max-width: 1000px; margin: 0 auto; padding: 1.5rem 0; }
+    .card-panel { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 2rem; }
+    #map { height: 400px; width: 100%; border-radius: 8px; border: 2px solid var(--line); z-index: 1; }
+    .form-label { font-weight: 600; color: var(--ink); font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .btn-submit { background-color: var(--copper-deep); color: white; padding: 0.6rem 1.5rem; font-weight: 500; border-radius: 6px; border: none; width: 100%; transition: 0.2s; }
+    .btn-submit:hover { background-color: #8c4a17; transform: translateY(-2px); }
+</style>
+
+<div class="page-wrap">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1" style="color: var(--ink); font-weight: 600;">✏️ แก้ไขใบงานซ่อม</h2>
+            <p class="text-muted mb-0">รหัสใบงาน: {{ job.id }} | ลูกค้า: {{ job.customer_name }}</p>
+        </div>
+        <a href="{% url 'services:job_list' %}" class="btn btn-outline-secondary">ย้อนกลับ</a>
+    </div>
+
+    <div class="card-panel shadow-sm">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row g-4">
+                
+                <div class="col-lg-5">
+                    <h5 class="border-bottom pb-2 mb-3" style="color: var(--copper-deep);">ข้อมูลงานซ่อม</h5>
+                    {% for field in form %}
+                        {% if field.name != 'latitude' and field.name != 'longitude' %}
+                            <div class="mb-3">
+                                <label class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <div class="row mt-4">
+                        <div class="col-6">
+                            <label class="form-label text-muted small">ละติจูด (Latitude)</label>
+                            {{ form.latitude }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small">ลองจิจูด (Longitude)</label>
+                            {{ form.longitude }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <!-- 🌟 โชว์หลักฐานการส่งงานจากช่าง (ถ้ามี) -->
+                    {% if job.completion_image %}
+                    <div class="mb-4 p-3 rounded" style="background: var(--paper); border: 1px solid var(--line);">
+                        <h5 class="border-bottom pb-2 mb-2" style="color: #3a6b3f; font-size: 1.05rem;">📸 หลักฐานการส่งงานจากช่าง</h5>
+                        <div class="text-center mb-2">
+                            <a href="{{ job.completion_image.url }}" target="_blank">
+                                <img src="{{ job.completion_image.url }}" class="img-fluid rounded border" style="max-height: 220px; object-fit: contain;">
+                            </a>
+                        </div>
+                        <p class="mb-0 text-muted" style="font-size: 0.9rem;">
+                            <strong>หมายเหตุการซ่อม:</strong> {{ job.completion_note|default:"- ไม่มีระบุ -" }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h5 class="mb-0" style="color: var(--copper-deep);">แผนที่ (คลิกเพื่อแก้ไขพิกัดใหม่)</h5>
+                    </div>
+                    <div id="map"></div>
+                </div>
+                
+            </div>
+            
+            <hr class="mt-5 mb-4">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <button type="submit" class="btn-submit">💾 อัปเดตข้อมูล</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    var rawLat = "{{ job.latitude|default:'16.4828' }}";
+    var rawLng = "{{ job.longitude|default:'99.5227' }}";
+    
+    var lat = parseFloat(rawLat.replace(',', '.'));
+    var lng = parseFloat(rawLng.replace(',', '.'));
+
+    var map = L.map('map').setView([lat, lng], 14);
+
+    L.tileLayer('https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}', {
+        maxZoom: 19,
+        attribution: '© Google Maps'
+    }).addTo(map);
+
+    var marker;
+
+    var originalLat = "{{ job.latitude|default:'' }}";
+    if (originalLat !== "") {
+        marker = L.marker([lat, lng]).addTo(map);
+    }
+
+    map.on('click', function(e) {
+        var lat_new = e.latlng.lat;
+        var lng_new = e.latlng.lng;
+        
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        
+        marker = L.marker([lat_new, lng_new]).addTo(map);
+        document.getElementById('id_latitude').value = lat_new.toFixed(6);
+        document.getElementById('id_longitude').value = lng_new.toFixed(6);
+    });
+</script>
+{% endblock %}

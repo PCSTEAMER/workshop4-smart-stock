@@ -11,7 +11,7 @@ from .forms import SparePartForm, TransactionForm
 def is_staff_user(user):
     return user.is_authenticated and user.is_staff
 
-# 1. หน้าแสดงรายการอะไหล่ (เรียงตามลำดับแรก -> ล่าสุดต่อท้าย)
+# 1. หน้าแสดงรายการอะไหล่ (หน้าหลัก)
 def part_list(request):
     query = request.GET.get('q', '')
     if query:
@@ -117,22 +117,26 @@ def transaction_create(request):
         'selected_part': selected_part
     })
 
-# 6. หน้าดูประวัติ (เรียงตามวันเวลาที่ทำรายการ อันแรก -> รายการใหม่ต่อท้าย)
+# 6. หน้าดูประวัติ 
 @login_required(login_url='accounts:login')
 def transaction_history(request):
     if request.user.is_superuser or request.user.is_staff:
-        transactions = Transaction.objects.all().order_by('created_at')
+        transactions_list = Transaction.objects.all().order_by('-created_at')
     else:
         full_name = request.user.get_full_name().strip()
         user_names = [request.user.username]
         if full_name:
             user_names.append(full_name)
             
-        transactions = Transaction.objects.filter(action_by__in=user_names).order_by('created_at')
+        transactions_list = Transaction.objects.filter(action_by__in=user_names).order_by('-created_at')
+        
+    paginator = Paginator(transactions_list, 15)
+    page_number = request.GET.get('page')
+    transactions = paginator.get_page(page_number)
         
     return render(request, 'transaction_history.html', {'transactions': transactions})
 
-# 7. ส่งออก Excel (เรียงลำดับตรงกับหน้าเว็บ)
+# 7. ส่งออก Excel 
 @login_required(login_url='accounts:login')
 def export_transactions_excel(request):
     wb = openpyxl.Workbook()
@@ -143,14 +147,14 @@ def export_transactions_excel(request):
     ws.append(headers)
 
     if request.user.is_superuser or request.user.is_staff:
-        transactions = Transaction.objects.all().order_by('created_at')
+        transactions = Transaction.objects.all().order_by('-created_at')
     else:
         full_name = request.user.get_full_name().strip()
         user_names = [request.user.username]
         if full_name:
             user_names.append(full_name)
             
-        transactions = Transaction.objects.filter(action_by__in=user_names).order_by('created_at')
+        transactions = Transaction.objects.filter(action_by__in=user_names).order_by('-created_at')
 
     for tx in transactions:
         ws.append([

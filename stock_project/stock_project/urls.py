@@ -11,9 +11,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('parts_app.urls')),
     path('accounts/', include('accounts.urls')),
-    
     # ดึงไฟล์ภาพจาก media มาแสดงผลบนโฮสต์จริง
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    # เพิ่มบรรทัดนี้เข้าไปเพื่อให้ระบบรู้จักเส้นทางของ services
+    path('services/', include('services.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .page-wrap { max-width: 1140px; margin: 0 auto; padding: 1.5rem 0; }
+    .panel-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; padding: 1.5rem;}
+    .job-table { width: 100%; border-collapse: collapse; }
+    .job-table thead th { background: var(--ink); color: #f0ede6; font-weight: 500; font-size: 0.9rem; text-align: left; padding: 0.8rem 1rem; border: none; }
+    .job-table tbody td { padding: 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 0.95rem; }
+    .job-table tbody tr:hover { background: var(--paper); }
+    
+    /* 🌟 ปรับปรุงสถานะให้อยู่บรรทัดเดียวกัน ไม่ซ้อนทับ */
+    .status-badge { padding: 0.4rem 0.9rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; white-space: nowrap; display: inline-block; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-progress { background: #cce5ff; color: #004085; }
+    .status-approval { background: #fef3c7; color: #d97706; border: 1px solid #f6d88b; }
+    .status-completed { background: #d4edda; color: #155724; }
+    
+    /* จัดกลุ่มปุ่มให้กว้างเท่ากัน ดูเป็นระเบียบ */
+    .action-btn-group { display: flex; flex-direction: column; gap: 0.4rem; min-width: 90px; margin: 0 auto; align-items: center; }
+    
+    /* ปุ่มนำทาง */
+    .btn-nav { width: 100%; justify-content: center; background: #e8f0fe; color: #1a73e8; border: 1px solid #d2e3fc; padding: 0.4rem 0.8rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-nav:hover { background: #d2e3fc; transform: translateY(-2px); }
+    
+    /* ปุ่มแก้ไข / จัดการ */
+    .btn-edit-job { width: 100%; justify-content: center; background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 0.4rem 0.8rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-edit-job:hover { background: var(--paper); border-color: var(--copper); color: var(--copper-deep); transform: translateY(-2px); }
+
+    /* ปุ่มส่งงานสำหรับช่าง */
+    .btn-submit-work { width: 100%; justify-content: center; background: #eaf3ea; color: #3a6b3f; border: 1px solid #c8e6c9; padding: 0.4rem 0.8rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-submit-work:hover { background: #d4edda; transform: translateY(-2px); }
+</style>
+
+<div class="page-wrap">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1" style="color: var(--ink); font-weight: 600;">📋 รายการงานซ่อม</h2>
+            <p class="text-muted mb-0">ตรวจสอบสถานะงานและนำทางไปสถานที่ซ่อม</p>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <a href="{% url 'services:job_history' %}" class="btn btn-outline-dark fw-bold" style="padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
+                📜 ดูประวัติการทำงาน
+            </a>
+
+            {% if request.user.is_staff or request.user.is_superuser %}
+            <a href="{% url 'services:create_job' %}" class="btn text-white fw-bold" style="background-color: var(--copper-deep); padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
+                + มอบหมายงานใหม่
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel-card shadow-sm">
+        <div class="table-responsive">
+            <table class="job-table">
+                <thead>
+                    <tr>
+                        <th>วันที่รับงาน</th>
+                        <th>ชื่องาน / อาการเสีย</th>
+                        <th>ลูกค้า / ติดต่อ</th>
+                        <th>ช่างรับผิดชอบ</th>
+                        <th style="width: 150px;">สถานะ</th>
+                        <th class="text-center">การจัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td class="text-muted">{{ job.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <strong>{{ job.title }}</strong><br>
+                            <small class="text-muted">{{ job.description|truncatechars:30 }}</small>
+                        </td>
+                        <td>
+                            {{ job.customer_name }}<br>
+                            <span style="color: var(--copper-deep); font-size: 0.85rem;">📞 {{ job.customer_phone }}</span>
+                        </td>
+                        <td>
+                            {% if job.technician %}
+                                👤 {{ job.technician.first_name|default:job.technician.username }}
+                            {% else %}
+                                <span class="text-muted">- ยังไม่ระบุช่าง -</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if job.status == 'pending' %}
+                                <span class="status-badge status-pending">รอดำเนินการ</span>
+                            {% elif job.status == 'in_progress' %}
+                                <span class="status-badge status-progress">กำลังซ่อม</span>
+                            {% elif job.status == 'pending_approval' %}
+                                <span class="status-badge status-approval">รอแอดมินตรวจ</span>
+                            {% elif job.status == 'completed' %}
+                                <span class="status-badge status-completed">เสร็จสิ้น</span>
+                            {% else %}
+                                <span class="status-badge bg-secondary text-white">ยกเลิก</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="action-btn-group">
+                                <!-- ปุ่มนำทาง -->
+                                {% if job.latitude and job.longitude %}
+                                    <a href="https://www.google.com/maps/dir/?api=1&destination={{ job.latitude }},{{ job.longitude }}" target="_blank" class="btn-nav">
+                                        📍 นำทาง
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted" style="font-size: 0.85rem; padding: 0.4rem 0;">- ไม่มีพิกัด -</span>
+                                {% endif %}
+
+                                <!-- เงื่อนไขปุ่มตามสิทธิ์ผู้ใช้ -->
+                                {% if request.user.is_staff or request.user.is_superuser %}
+                                    <!-- ปุ่มสำหรับแอดมิน -->
+                                    <a href="{% url 'services:edit_job' job.id %}" class="btn-edit-job">
+                                        ✏️ จัดการ
+                                    </a>
+                                {% else %}
+                                    <!-- ปุ่มสำหรับช่าง (แสดงเฉพาะตอนงานยังทำไม่เสร็จ) -->
+                                    {% if job.status == 'pending' or job.status == 'in_progress' %}
+                                        <a href="{% url 'services:submit_job' job.id %}" class="btn-submit-work">
+                                            📸 ส่งงาน
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <h5>ยังไม่มีใบงานซ่อมในระบบ</h5>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .page-wrap { max-width: 1140px; margin: 0 auto; padding: 1.5rem 0; }
+    .panel-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; padding: 1.5rem;}
+    .job-table { width: 100%; border-collapse: collapse; }
+    .job-table thead th { background: var(--ink); color: #f0ede6; font-weight: 500; font-size: 0.9rem; text-align: left; padding: 0.8rem 1rem; border: none; }
+    .job-table tbody td { padding: 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 0.95rem; }
+    .job-table tbody tr:hover { background: var(--paper); }
+    
+    .status-badge { padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+    .status-completed { background: #d4edda; color: #155724; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+</style>
+
+<div class="page-wrap">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1" style="color: var(--ink); font-weight: 600;">📜 ประวัติการทำงานย้อนหลัง</h2>
+            <p class="text-muted mb-0">รายการงานซ่อมที่เสร็จสิ้นหรือถูกยกเลิกแล้ว</p>
+        </div>
+        <a href="{% url 'services:job_list' %}" class="btn btn-outline-secondary">← กลับไปหน้างานปัจจุบัน</a>
+    </div>
+
+    <div class="panel-card shadow-sm">
+        <div class="table-responsive">
+            <table class="job-table">
+                <thead>
+                    <tr>
+                        <th>วันที่อัปเดตล่าสุด</th>
+                        <th>ชื่องาน / อาการเสีย</th>
+                        <th>ลูกค้า / ติดต่อ</th>
+                        <th>ช่างผู้รับผิดชอบ</th>
+                        <th>สถานะ</th>
+                        <th>หลักฐานการซ่อม</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td class="text-muted">{{ job.updated_at|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <strong>{{ job.title }}</strong><br>
+                            <small class="text-muted">{{ job.description|truncatechars:30 }}</small>
+                        </td>
+                        <td>
+                            {{ job.customer_name }}<br>
+                            <span style="color: var(--copper-deep); font-size: 0.85rem;">📞 {{ job.customer_phone }}</span>
+                        </td>
+                        <td>
+                            👤 {{ job.technician.first_name|default:job.technician.username|default:"-" }}
+                        </td>
+                        <td>
+                            {% if job.status == 'completed' %}
+                                <span class="status-badge status-completed">เสร็จสิ้น</span>
+                            {% else %}
+                                <span class="status-badge status-cancelled">ยกเลิก</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if job.completion_image %}
+                                <a href="{{ job.completion_image.url }}" target="_blank" class="btn btn-sm btn-outline-dark">
+                                    📷 ดูรูปหลักฐาน
+                                </a>
+                            {% else %}
+                                <span class="text-muted small">- ไม่มีรูป -</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <h5>ยังไม่มีประวัติการทำงานในระบบ</h5>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

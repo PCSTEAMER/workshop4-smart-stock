@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- นำเข้า API ของ Leaflet.js -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+    .page-wrap { max-width: 1000px; margin: 0 auto; padding: 1.5rem 0; }
+    .card-panel { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 2rem; }
+    #map { height: 450px; width: 100%; border-radius: 8px; border: 2px solid var(--line); z-index: 1; }
+    .form-label { font-weight: 600; color: var(--ink); font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .btn-submit { background-color: var(--copper-deep); color: white; padding: 0.6rem 1.5rem; font-weight: 500; border-radius: 6px; border: none; width: 100%; transition: 0.2s; }
+    .btn-submit:hover { background-color: #8c4a17; transform: translateY(-2px); }
+</style>
+
+<div class="page-wrap">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1" style="color: var(--ink); font-weight: 600;">📍 สร้างใบงานซ่อมใหม่</h2>
+            <p class="text-muted mb-0">กรอกรายละเอียดลูกค้าและปักหมุดสถานที่บนแผนที่</p>
+        </div>
+    </div>
+
+    <div class="card-panel shadow-sm">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row g-4">
+                
+                <!-- คอลัมน์ซ้าย: ฟอร์มกรอกข้อมูล -->
+                <div class="col-lg-5">
+                    <h5 class="border-bottom pb-2 mb-3" style="color: var(--copper-deep);">ข้อมูลงานซ่อม</h5>
+                    
+                    {% for field in form %}
+                        {% if field.name != 'latitude' and field.name != 'longitude' %}
+                            <div class="mb-3">
+                                <label class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <small class="text-danger">{{ field.errors.0 }}</small>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <div class="row mt-4">
+                        <div class="col-6">
+                            <label class="form-label text-muted small">ละติจูด (Latitude)</label>
+                            {{ form.latitude }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small">ลองจิจูด (Longitude)</label>
+                            {{ form.longitude }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- คอลัมน์ขวา: แผนที่ -->
+                <div class="col-lg-7">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h5 class="mb-0" style="color: var(--copper-deep);">แผนที่ (คลิกเพื่อปักหมุด)</h5>
+                        <small class="text-danger">** จำเป็นต้องปักหมุด</small>
+                    </div>
+                    
+                    <!-- กล่องแผนที่ -->
+                    <div id="map"></div>
+                </div>
+                
+            </div>
+            
+            <hr class="mt-5 mb-4">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <button type="submit" class="btn-submit">💾 บันทึกและมอบหมายงาน</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // 1. สร้างแผนที่ เริ่มต้นที่ มรภ.กำแพงเพชร
+    var map = L.map('map').setView([16.4828, 99.5227], 13);
+
+    // 2. ดึงภาพแผนที่มาจากเซิร์ฟเวอร์ของ Google Maps โดยตรง (แก้ปัญหาลายน้ำและภาพพัง 403)
+    L.tileLayer('https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}', {
+        maxZoom: 19,
+        attribution: '© Google Maps'
+    }).addTo(map);
+
+    var marker;
+
+    // 3. ฟังก์ชันดักจับการคลิกบนแผนที่
+    map.on('click', function(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        
+        marker = L.marker([lat, lng]).addTo(map);
+        
+        document.getElementById('id_latitude').value = lat.toFixed(6);
+        document.getElementById('id_longitude').value = lng.toFixed(6);
+    });
+</script>
+{% endblock %}

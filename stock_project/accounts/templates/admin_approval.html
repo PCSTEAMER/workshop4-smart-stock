@@ -1,185 +1,98 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบอนุมัติสมาชิก - คลังอะไหล่</title>
-    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --paper: #eef1ee;
-            --panel: #ffffff;
-            --ink: #1c211e;
-            --line: #d7ddd8;
-            --copper: #b2601f;
-            --copper-deep: #8c4a17;
-            --muted: #5c645f;
-            --danger: #9c4130;
-            --danger-bg: #f6e9e6;
-            --ok: #3a6b3f;
-        }
-        * { box-sizing: border-box; }
-        html { font-size: 108%; }
-        body {
-            background: var(--paper);
-            font-family: 'IBM Plex Sans Thai', 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: var(--ink);
-            line-height: 1.6;
-        }
+{% extends 'base.html' %}
 
-        .page-wrap { max-width: 1140px; margin: 0 auto; padding: 2.5rem 1rem; }
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            padding-bottom: 1.5rem;
-            margin-bottom: 1.75rem;
-            border-bottom: 1px solid var(--line);
-        }
-        .page-header h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.35rem; }
-        .page-header p { color: var(--muted); margin: 0; font-size: 0.95rem; }
-        .btn-back {
-            background: var(--panel);
-            border: 1px solid var(--line);
-            color: var(--ink);
-            padding: 0.55rem 1.2rem;
-            border-radius: 6px;
-            font-size: 0.92rem;
-            text-decoration: none;
-            transition: transform 0.12s ease, border-color 0.15s ease;
-        }
-        .btn-back:hover { border-color: var(--muted); color: var(--ink); transform: translateY(-1px); }
+{% block content %}
+<style>
+    /* CSS เฉพาะส่วนของหน้าจัดการสมาชิก */
+    .page-wrap { max-width: 1140px; margin: 0 auto; padding: 1.5rem 0; }
+    .page-header {
+        display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1.5rem;
+        padding-bottom: 1.5rem; margin-bottom: 1.75rem; border-bottom: 1px solid var(--line);
+    }
+    .page-header h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.35rem; }
+    .page-header p { color: var(--muted); margin: 0; font-size: 0.95rem; }
+    
+    /* 🌟 เพิ่ม CSS ช่องค้นหา */
+    .search-box { min-width: 280px; }
+    .search-box input {
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 0.55rem 0.85rem;
+        font-size: 0.95rem;
+        width: 100%;
+        background: var(--panel);
+        color: var(--ink);
+    }
+    .search-box input:focus { outline: none; border-color: var(--copper); box-shadow: none; }
 
-        .panel-card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+    .panel-card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+    .approval-table { width: 100%; border-collapse: collapse; }
+    .approval-table thead th { background: var(--ink); color: #f0ede6; font-weight: 500; font-size: 0.85rem; text-align: left; padding: 0.75rem 1rem; }
+    .approval-table thead th.text-center { text-align: center; }
+    .approval-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 0.92rem; }
+    .approval-table tbody tr:hover { background: var(--paper); }
+    .approval-table tbody tr:last-child td { border-bottom: none; }
 
-        .alert-flat {
-            border-radius: 3px;
-            padding: 0.8rem 1rem;
-            font-size: 0.92rem;
-            margin-bottom: 0.75rem;
-            border-left: 3px solid;
-        }
-        .alert-flat.success { background: #eaf3ea; border-color: var(--ok); color: var(--ink); }
-        .alert-flat.error { background: var(--danger-bg); border-color: var(--danger); color: var(--ink); }
-        .alert-flat.warning { background: #faf2e2; border-color: var(--copper); color: var(--ink); }
-        .alert-flat.info { background: var(--paper); border-color: var(--muted); color: var(--ink); }
+    .role-tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 3px; font-size: 0.8rem; font-weight: 500; }
+    .role-super { background: #f6e9e6; color: #9c4130; }
+    .role-admin { background: #faf2e2; color: #8c4a17; }
+    .role-member { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
+    .role-guest { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
 
-        .approval-table { width: 100%; border-collapse: collapse; }
-        .approval-table thead th {
-            background: var(--ink);
-            color: #f0ede6;
-            font-weight: 500;
-            font-size: 0.85rem;
-            text-align: left;
-            padding: 0.75rem 1rem;
-        }
-        .approval-table thead th.text-center { text-align: center; }
-        .approval-table tbody td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--line);
-            vertical-align: middle;
-            font-size: 0.92rem;
-        }
-        .approval-table tbody tr:hover { background: var(--paper); }
-        .approval-table tbody tr:last-child td { border-bottom: none; }
+    .status-tag { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 500; }
+    .status-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+    .status-pending { color: #8c4a17; } .status-pending::before { background: var(--copper); }
+    .status-approved { color: #3a6b3f; } .status-approved::before { background: #3a6b3f; }
+    .status-rejected, .status-suspended { color: #9c4130; } .status-rejected::before, .status-suspended::before { background: #9c4130; }
 
-        .role-tag {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 3px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        .role-super { background: var(--danger-bg); color: var(--danger); }
-        .role-admin { background: #faf2e2; color: var(--copper-deep); }
-        .role-member { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
-        .role-guest { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+    .approved-by { color: var(--muted); font-size: 0.85rem; }
+    .self-tag { display: inline-block; border: 1px solid var(--line); color: var(--muted); padding: 0.2rem 0.6rem; border-radius: 3px; font-size: 0.8rem; }
 
-        .status-tag { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 500; }
-        .status-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
-        .status-pending { color: var(--copper-deep); }
-        .status-pending::before { background: var(--copper); }
-        .status-approved { color: var(--ok); }
-        .status-approved::before { background: var(--ok); }
-        .status-rejected, .status-suspended { color: var(--danger); }
-        .status-rejected::before, .status-suspended::before { background: var(--danger); }
+    .row-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.4rem; }
+    .row-actions form { margin: 0; }
+    .btn-row-action { border-radius: 5px; font-size: 0.8rem; padding: 0.32rem 0.75rem; border: 1px solid var(--line); background: var(--panel); cursor: pointer; transition: transform 0.12s ease; }
+    .btn-row-action:hover { transform: translateY(-1px); }
+    .btn-approve { color: #3a6b3f; } .btn-approve:hover { background: #eaf3ea; border-color: #3a6b3f; }
+    .btn-reject, .btn-delete { color: #9c4130; } .btn-reject:hover, .btn-delete:hover { background: #f6e9e6; border-color: #9c4130; }
+    .btn-suspend { color: #8c4a17; } .btn-suspend:hover { background: #faf2e2; border-color: var(--copper); }
+    .btn-promote, .btn-demote { color: var(--ink); } .btn-promote:hover, .btn-demote:hover { background: var(--paper); border-color: var(--muted); }
 
-        .approved-by { color: var(--muted); font-size: 0.85rem; }
-        .self-tag {
-            display: inline-block;
-            border: 1px solid var(--line);
-            color: var(--muted);
-            padding: 0.2rem 0.6rem;
-            border-radius: 3px;
-            font-size: 0.8rem;
-        }
+    .modal-content { border: 1px solid var(--line); border-radius: 4px; border-top: 3px solid #9c4130; }
+    .modal-header { border-bottom: 1px solid var(--line); }
+    .modal-title { font-size: 1.1rem; font-weight: 600; color: var(--ink); }
+    .modal-footer { border-top: 1px solid var(--line); }
+    #rejectReasonInput { width: 100%; border: 1px solid var(--line); border-radius: 3px; padding: 0.55rem 0.75rem; font-size: 0.92rem; font-family: inherit; }
+    #rejectReasonInput:focus { outline: none; border-color: var(--copper); }
 
-        .row-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.4rem; }
-        .row-actions form { margin: 0; }
-        .btn-row-action {
-            border-radius: 5px;
-            font-size: 0.8rem;
-            padding: 0.32rem 0.75rem;
-            border: 1px solid var(--line);
-            background: var(--panel);
-            cursor: pointer;
-            transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-        }
-        .btn-row-action:hover { transform: translateY(-1px); }
-        .btn-row-action:active { transform: translateY(0); box-shadow: none; }
-        .btn-approve { color: var(--ok); }
-        .btn-approve:hover { background: #eaf3ea; border-color: var(--ok); box-shadow: 0 2px 6px rgba(58, 107, 63, 0.18); }
-        .btn-reject, .btn-delete { color: var(--danger); }
-        .btn-reject:hover, .btn-delete:hover { background: var(--danger-bg); border-color: var(--danger); box-shadow: 0 2px 6px rgba(156, 65, 48, 0.18); }
-        .btn-suspend { color: var(--copper-deep); }
-        .btn-suspend:hover { background: #faf2e2; border-color: var(--copper); box-shadow: 0 2px 6px rgba(178, 96, 31, 0.18); }
-        .btn-promote, .btn-demote { color: var(--ink); }
-        .btn-promote:hover, .btn-demote:hover { background: var(--paper); border-color: var(--muted); }
+    /* 🌟 CSS สำหรับแบ่งหน้า (Pagination) */
+    .pagination-flat {
+        display: flex; justify-content: center; gap: 0.35rem; list-style: none; padding: 1.5rem 0; margin: 0;
+        background: var(--panel); border-top: 1px solid var(--line);
+    }
+    .pagination-flat a, .pagination-flat span {
+        display: inline-block; min-width: 36px; text-align: center; padding: 0.4rem 0.6rem;
+        border: 1px solid var(--line); border-radius: 5px; color: var(--ink); text-decoration: none;
+        font-size: 0.88rem; background: var(--panel);
+    }
+    .pagination-flat a:hover { border-color: var(--copper); color: var(--copper-deep); }
+    .pagination-flat .active span { background: linear-gradient(180deg, #2a3129 0%, var(--ink) 100%); border-color: var(--ink); color: #fff; }
+    .pagination-flat .disabled span { color: var(--muted); background: var(--paper); }
+</style>
 
-        .modal-content {
-            border: 1px solid var(--line);
-            border-radius: 4px;
-            border-top: 3px solid var(--danger);
-        }
-        .modal-header { border-bottom: 1px solid var(--line); }
-        .modal-title { font-size: 1.1rem; font-weight: 600; color: var(--ink); }
-        .modal-footer { border-top: 1px solid var(--line); }
-        #rejectReasonInput {
-            width: 100%;
-            border: 1px solid var(--line);
-            border-radius: 3px;
-            padding: 0.55rem 0.75rem;
-            font-size: 0.92rem;
-            font-family: inherit;
-        }
-        #rejectReasonInput:focus { outline: none; border-color: var(--copper); }
-    </style>
-</head>
-<body>
-
-    <div class="page-wrap">
-        <div class="page-header">
-            <div>
-                <h1>จัดการสถานะผู้ใช้งาน</h1>
-                <p>อนุมัติ ปฏิเสธ หรือปรับสิทธิ์ผู้ใช้งานในระบบคลังอะไหล่</p>
-            </div>
-            <a href="/" class="btn-back">กลับหน้าหลักคลังอะไหล่</a>
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1>จัดการสถานะผู้ใช้งาน</h1>
+            <p>อนุมัติ ปฏิเสธ หรือปรับสิทธิ์ผู้ใช้งานในระบบคลังอะไหล่</p>
         </div>
+        <!-- 🌟 เพิ่มช่องค้นหา -->
+        <div class="search-box">
+            <input type="text" id="searchInput" value="{{ query }}" placeholder="ค้นหาด้วยชื่อผู้ใช้, ชื่อ-สกุล หรืออีเมล...">
+        </div>
+    </div>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert-flat {% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <div class="panel-card">
+    <div class="panel-card">
+        <!-- 🌟 ห่อด้วย id="table-container" สำหรับทำ Real-time ค้นหา -->
+        <div id="table-container">
             <div class="table-responsive">
                 <table class="approval-table">
                     <thead>
@@ -233,7 +146,7 @@
                             </td>
                             <td class="text-center">
                                 {% if p.user.is_superuser %}
-                                    <span class="self-tag" style="border-color: var(--danger); color: var(--danger);">Super Admin (ล็อกสิทธิ์)</span>
+                                    <span class="self-tag" style="border-color: #9c4130; color: #9c4130;">Super Admin (ล็อกสิทธิ์)</span>
                                 {% elif p.user == request.user %}
                                     <span class="self-tag">บัญชีของคุณ</span>
                                 {% else %}
@@ -284,46 +197,87 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">ยังไม่มีสมาชิกในระบบ</td>
+                            <td colspan="7" class="text-center text-muted py-4">ไม่พบข้อมูลผู้ใช้งานที่ค้นหา</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+
+            <!-- 🌟 ระบบแบ่งหน้า (Pagination) -->
+            {% if profiles.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination-flat">
+                    {% if profiles.has_previous %}
+                        <li><a href="?page={{ profiles.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">ก่อนหน้า</a></li>
+                    {% else %}
+                        <li class="disabled"><span>ก่อนหน้า</span></li>
+                    {% endif %}
+
+                    {% for i in profiles.paginator.page_range %}
+                        {% if profiles.number == i %}
+                            <li class="active"><span>{{ i }}</span></li>
+                        {% else %}
+                            <li><a href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if profiles.has_next %}
+                        <li><a href="?page={{ profiles.next_page_number }}{% if query %}&q={{ query }}{% endif %}">ถัดไป</a></li>
+                    {% else %}
+                        <li class="disabled"><span>ถัดไป</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
         </div>
     </div>
+</div>
 
-    <!-- Modal ปฏิเสธ -->
-    <div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" id="rejectForm">
-                    {% csrf_token %}
-                    <div class="modal-header">
-                        <h5 class="modal-title">ปฏิเสธบัญชี <span id="rejectUsername"></span></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <label class="form-label fw-bold mb-2">เหตุผลในการปฏิเสธ</label>
-                        <textarea name="rejection_reason" id="rejectReasonInput" rows="3" placeholder="ระบุเหตุผลให้ผู้สมัครทราบ" required></textarea>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn-back" data-bs-dismiss="modal">ยกเลิก</button>
-                        <button type="submit" class="btn-row-action btn-reject" style="padding: 0.55rem 1.3rem; font-size: 0.92rem;">ยืนยันการปฏิเสธ</button>
-                    </div>
-                </form>
-            </div>
+<!-- Modal ปฏิเสธ -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="rejectForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">ปฏิเสธบัญชี <span id="rejectUsername"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label fw-bold mb-2">เหตุผลในการปฏิเสธ</label>
+                    <textarea name="rejection_reason" id="rejectReasonInput" rows="3" placeholder="ระบุเหตุผลให้ผู้สมัครทราบ" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-danger" style="padding: 0.55rem 1.3rem; font-size: 0.92rem;">ยืนยันการปฏิเสธ</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-    <script>
-        var rejectModal = document.getElementById('rejectModal');
-        rejectModal.addEventListener('show.bs.modal', function (event) {
-            var trigger = event.relatedTarget;
-            document.getElementById('rejectForm').setAttribute('action', trigger.getAttribute('data-action-url'));
-            document.getElementById('rejectUsername').textContent = trigger.getAttribute('data-username');
-        });
-    </script>
-</body>
-</html>
+<!-- 🌟 เพิ่ม JavaScript ค้นหา Real-time -->
+<script>
+    var rejectModal = document.getElementById('rejectModal');
+    rejectModal.addEventListener('show.bs.modal', function (event) {
+        var trigger = event.relatedTarget;
+        document.getElementById('rejectForm').setAttribute('action', trigger.getAttribute('data-action-url'));
+        document.getElementById('rejectUsername').textContent = trigger.getAttribute('data-username');
+    });
+
+    // โค้ดดักจับการพิมพ์เพื่อค้นหาข้อมูลแบบ Real-time
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', function() {
+        const query = this.value;
+        fetch(`?q=${query}`)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.getElementById('table-container').innerHTML;
+                document.getElementById('table-container').innerHTML = newTable;
+            });
+    });
+</script>
+{% endblock %}
