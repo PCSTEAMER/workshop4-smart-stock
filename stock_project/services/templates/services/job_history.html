@@ -2,20 +2,66 @@
 
 {% block content %}
 <style>
-    .page-wrap { max-width: 1140px; margin: 0 auto; padding: 1.5rem 0; }
-    .panel-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; padding: 1.5rem;}
-    .job-table { width: 100%; border-collapse: collapse; }
-    .job-table thead th { background: var(--ink); color: #f0ede6; font-weight: 500; font-size: 0.9rem; text-align: left; padding: 0.8rem 1rem; border: none; }
-    .job-table tbody td { padding: 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 0.95rem; }
-    .job-table tbody tr:hover { background: var(--paper); }
+    /* CSS ปรับความกว้างและการจัดวางหน้าประวัติการทำงาน */
+    .page-wrap { 
+        width: 100%; 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        padding: 1.5rem 1rem; 
+        box-sizing: border-box;
+    }
     
-    .status-badge { padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+    .panel-card { 
+        width: 100%;
+        background: var(--panel); 
+        border: 1px solid var(--line); 
+        border-radius: 8px; 
+        overflow: hidden; 
+        padding: 1.5rem;
+        box-sizing: border-box;
+    }
+    
+    .job-table { 
+        width: 100%; 
+        border-collapse: collapse; 
+    }
+    
+    .job-table thead th { 
+        background: var(--ink); 
+        color: #f0ede6; 
+        font-weight: 500; 
+        font-size: 0.9rem; 
+        text-align: left; 
+        padding: 0.85rem 1rem; 
+        border: none; 
+        white-space: nowrap;
+    }
+    
+    .job-table tbody td { 
+        padding: 1rem; 
+        border-bottom: 1px solid var(--line); 
+        vertical-align: middle; 
+        font-size: 0.95rem; 
+    }
+    
+    .job-table tbody tr:hover { 
+        background: var(--paper); 
+    }
+    
+    .status-badge { 
+        display: inline-block;
+        padding: 0.35rem 0.85rem; 
+        border-radius: 20px; 
+        font-size: 0.85rem; 
+        font-weight: 600; 
+        white-space: nowrap;
+    }
     .status-completed { background: #d4edda; color: #155724; }
     .status-cancelled { background: #f8d7da; color: #721c24; }
 </style>
 
 <div class="page-wrap">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
             <h2 class="mb-1" style="color: var(--ink); font-weight: 600;">📜 ประวัติการทำงานย้อนหลัง</h2>
             <p class="text-muted mb-0">รายการงานซ่อมที่เสร็จสิ้นหรือถูกยกเลิกแล้ว</p>
@@ -28,21 +74,23 @@
             <table class="job-table">
                 <thead>
                     <tr>
-                        <th>วันที่อัปเดตล่าสุด</th>
-                        <th>ชื่องาน / อาการเสีย</th>
-                        <th>ลูกค้า / ติดต่อ</th>
-                        <th>ช่างผู้รับผิดชอบ</th>
-                        <th>สถานะ</th>
-                        <th>หลักฐานการซ่อม</th>
+                        <th style="width: 15%;">วันที่อัปเดตล่าสุด</th>
+                        <th style="width: 25%;">ชื่องาน / อาการเสีย</th>
+                        <th style="width: 20%;">ลูกค้า / ติดต่อ</th>
+                        <th style="width: 15%;">ช่างผู้รับผิดชอบ</th>
+                        <th style="width: 10%;">สถานะ</th>
+                        <th style="width: 15%;">หลักฐานการซ่อม</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for job in jobs %}
                     <tr>
-                        <td class="text-muted">{{ job.updated_at|date:"d/m/Y H:i" }}</td>
+                        <td class="text-muted" style="white-space: nowrap;">
+                            {{ job.updated_at|date:"d/m/Y H:i" }}
+                        </td>
                         <td>
                             <strong>{{ job.title }}</strong><br>
-                            <small class="text-muted">{{ job.description|truncatechars:30 }}</small>
+                            <small class="text-muted">{{ job.description|truncatechars:45 }}</small>
                         </td>
                         <td>
                             {{ job.customer_name }}<br>
