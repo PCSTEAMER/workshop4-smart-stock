@@ -63,6 +63,10 @@
     #rejectReasonInput { width: 100%; border: 1px solid var(--line); border-radius: 3px; padding: 0.55rem 0.75rem; font-size: 0.92rem; font-family: inherit; }
     #rejectReasonInput:focus { outline: none; border-color: var(--copper); }
 
+    /* 🌟 แก้ปัญหา Modal Backdrop ทึบทับหน้าต่าง Modal */
+    .modal { z-index: 1060 !important; }
+    .modal-backdrop { z-index: 1050 !important; }
+
     /* 🌟 CSS สำหรับแบ่งหน้า (Pagination) */
     .pagination-flat {
         display: flex; justify-content: center; gap: 0.35rem; list-style: none; padding: 1.5rem 0; margin: 0;
@@ -257,27 +261,38 @@
     </div>
 </div>
 
-<!-- 🌟 เพิ่ม JavaScript ค้นหา Real-time -->
+<!-- 🌟 เพิ่ม JavaScript สำหรับจัดการ Modal และค้นหา Real-time -->
 <script>
-    var rejectModal = document.getElementById('rejectModal');
-    rejectModal.addEventListener('show.bs.modal', function (event) {
-        var trigger = event.relatedTarget;
-        document.getElementById('rejectForm').setAttribute('action', trigger.getAttribute('data-action-url'));
-        document.getElementById('rejectUsername').textContent = trigger.getAttribute('data-username');
+    document.addEventListener('DOMContentLoaded', function() {
+        var rejectModal = document.getElementById('rejectModal');
+        if (rejectModal) {
+            // ย้าย Modal ไปต่อท้าย <body> โดยตรงเพื่อย้ายออกจาก Stacking Context เดิม
+            document.body.appendChild(rejectModal);
+
+            rejectModal.addEventListener('show.bs.modal', function (event) {
+                var trigger = event.relatedTarget;
+                if (trigger) {
+                    document.getElementById('rejectForm').setAttribute('action', trigger.getAttribute('data-action-url'));
+                    document.getElementById('rejectUsername').textContent = trigger.getAttribute('data-username');
+                }
+            });
+        }
     });
 
     // โค้ดดักจับการพิมพ์เพื่อค้นหาข้อมูลแบบ Real-time
     const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', function() {
-        const query = this.value;
-        fetch(`?q=${query}`)
-            .then(response => response.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newTable = doc.getElementById('table-container').innerHTML;
-                document.getElementById('table-container').innerHTML = newTable;
-            });
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value;
+            fetch(`?q=${query}`)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newTable = doc.getElementById('table-container').innerHTML;
+                    document.getElementById('table-container').innerHTML = newTable;
+                });
+        });
+    }
 </script>
 {% endblock %}

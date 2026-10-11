@@ -79,10 +79,10 @@
 </div>
 
 <script>
-    // 1. สร้างแผนที่ เริ่มต้นที่ มรภ.กำแพงเพชร
+    // สร้างแผนที่ เริ่มต้นที่ มรภ.กำแพงเพชร
     var map = L.map('map').setView([16.4828, 99.5227], 13);
 
-    // 2. ดึงภาพแผนที่มาจากเซิร์ฟเวอร์ของ Google Maps โดยตรง (แก้ปัญหาลายน้ำและภาพพัง 403)
+    // ดึงภาพแผนที่มาจากเซิร์ฟเวอร์ของ Google Maps โดยตรง (แก้ปัญหาลายน้ำและภาพพัง 403)
     L.tileLayer('https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}', {
         maxZoom: 19,
         attribution: '© Google Maps'
@@ -90,7 +90,7 @@
 
     var marker;
 
-    // 3. ฟังก์ชันดักจับการคลิกบนแผนที่
+    // ฟังก์ชันดักจับการคลิกบนแผนที่
     map.on('click', function(e) {
         var lat = e.latlng.lat;
         var lng = e.latlng.lng;
